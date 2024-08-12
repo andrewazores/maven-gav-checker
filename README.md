@@ -7,7 +7,9 @@ Utility for checking if a Maven dependency GAV is available in a particular Mave
 
 ## Running
 
-Build, then:
+Get the executable, either by building it locally or by downloading [a GitHub release](https://github.com/andrewazores/maven-gav-checker/releases).
+
+Then:
 
 ```bash
 $ ./target/maven-gav-checker-*-runner -h
