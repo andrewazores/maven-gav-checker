@@ -54,7 +54,7 @@ public class GAVFind implements Callable<Integer> {
                         + " specified (version listing mode) then all available versions are"
                         + " printed, otherwise the existence of the specified version is checked."
                         + " If the GitHub 'gh' client is installed, this can also be a GitHub Pull"
-                        + " Request path and the PR title will be used to infer the GAV.")
+                        + " Request URL and the PR title will be used to infer the GAV.")
     private String gav;
 
     @Option(
@@ -66,7 +66,7 @@ public class GAVFind implements Callable<Integer> {
     private String repoRoot;
 
     @Option(
-            names = {"-c", "--count"},
+            names = {"-n", "--limit"},
             description =
                     "The number of release versions to list in version listing mode. Defaults to"
                             + " the full list",
@@ -75,7 +75,7 @@ public class GAVFind implements Callable<Integer> {
 
     @Option(
             names = {"-k", "--insecure"},
-            description = "Disable TLS validation",
+            description = "Disable TLS validation on the remote Maven repository",
             defaultValue = "false")
     private boolean insecure;
 
