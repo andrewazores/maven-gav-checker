@@ -16,6 +16,7 @@
 package com.github.andrewazores;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.regex.Pattern;
 
 import io.quarkus.logging.Log;
@@ -33,8 +34,16 @@ class GitHubIntegration implements SourceIntegration {
     @Inject CliSupport cli;
 
     @Override
-    public boolean test(String url) {
-        return url.startsWith("https://github.com") || url.startsWith("http://github.com");
+    public boolean test(String i) {
+        try {
+            var url = new URL(i);
+            return ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))
+                    && "github.com".equals(url.getHost())
+                    && url.getPath().matches("^/(?:[\\w]+)/(?:[\\w]+)/pull/(?:[\\d]+)$");
+        } catch (Exception e) {
+            Log.trace(e);
+            return false;
+        }
     }
 
     @Override
