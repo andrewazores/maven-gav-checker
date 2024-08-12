@@ -83,9 +83,10 @@ public class GAVFind implements Callable<Integer> {
 
     @Option(
             names = {"-v", "--verbose"},
-            description = "Enable verbose debugging output",
+            description =
+                    "Enable verbose debugging output. Pass multiple times to increase log level.",
             defaultValue = "false")
-    private boolean verbose;
+    private boolean[] verbosity;
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new GAVFind()).execute(args);
@@ -94,10 +95,25 @@ public class GAVFind implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (verbose) {
-            System.setProperty(org.slf4j.simple.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE");
+        String logLevel;
+        switch (verbosity.length) {
+            case 0:
+                logLevel = "INFO";
+                break;
+            case 1:
+                logLevel = verbosity[0] ? "DEBUG" : "INFO";
+                break;
+            case 2:
+                logLevel = "TRACE";
+                break;
+            default:
+                logLevel = "TRACE";
+                break;
         }
+        System.setProperty(org.slf4j.simple.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, logLevel);
         final Logger logger = LoggerFactory.getLogger(GAVFind.class);
+        logger.debug("logLevel={} due to verbosity={}", logLevel, verbosity);
+
         if (insecure) {
             disableTlsValidation();
         }
@@ -136,9 +152,9 @@ public class GAVFind implements Callable<Integer> {
                 String.format(
                         "%s/%s/%s/maven-metadata.xml",
                         repoRoot, groupId.replaceAll("\\.", "/"), artifactId);
-        if (verbose) {
-            // TODO do this without opening the URL stream twice
-            logger.debug("Opening {} ...", url);
+        // TODO do this without opening the URL stream twice
+        logger.debug("Opening {} ...", url);
+        if (logger.isDebugEnabled()) {
             try (var stream = new BufferedInputStream(new URL(url).openStream())) {
                 logger.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
             }
