@@ -1,0 +1,110 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.andrewazores</groupId>
+  <artifactId>maven-gav-checker</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>maven-gav-checker</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <java.version>17</java.version>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <compiler-plugin.version>3.13.0</compiler-plugin.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <com.github.spotbugs.version>4.8.6</com.github.spotbugs.version>
+    <com.github.spotbugs.plugin.version>4.8.6.2</com.github.spotbugs.plugin.version>
+    <com.diffplug.spotless.maven.plugin.version>2.43.0</com.diffplug.spotless.maven.plugin.version>
+    <com.google.java-format.version>1.23.0</com.google.java-format.version>
+    <com.mycila.license.maven.plugin.version>4.5</com.mycila.license.maven.plugin.version>
+    <surefire-plugin.version>3.3.1</surefire-plugin.version>
+    <surefire.rerunFailingTestsCount>2</surefire.rerunFailingTestsCount>
+    <failsafe-plugin.version>3.3.1</failsafe-plugin.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.6.3</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${com.diffplug.spotless.maven.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>spotless</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <java>
+            <googleJavaFormat>
+              <version>${com.google.java-format.version}</version>
+              <style>AOSP</style>
+              <reflowLongStrings>true</reflowLongStrings>
+            </googleJavaFormat>
+            <trimTrailingWhitespace />
+            <endWithNewline />
+            <importOrder>
+              <order>java,javax,org.openjdk.jmc,io.cryostat,</order>
+            </importOrder>
+            <removeUnusedImports />
+          </java>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>${com.github.spotbugs.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>spotbugs</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${com.mycila.license.maven.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>update-license</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <licenseSets>
+            <licenseSet>
+              <header>LICENSE.header</header>
+              <includes>
+                <include>src/main/**/*.java</include>
+                <include>src/test/**/*.java</include>
+              </includes>
+            </licenseSet>
+          </licenseSets>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
