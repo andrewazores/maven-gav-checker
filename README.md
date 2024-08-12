@@ -1,6 +1,21 @@
 # maven-gav-checker
 Utility for checking if a Maven dependency GAV is available in a particular Maven repository, or searching for available versions of a dependency in a particular repository.
 
+This is mostly useful if you are building a project which has a requirement that its build dependencies are available in some private or more restricted Maven repository
+than the usual Maven Central, or if you'd like to be able to cross-reference available versions for a dependency between Maven repositories (for project upstream and
+downstream build differences, for example).
+
+The default search repository is `https://repo.maven.apache.org/maven2/`, but this can be overridden with the `-r`/`--repository` flag.
+
+Given a dependency `groupId:artifactId` argument, the tool will print out a list of all of the available versions for that dependency in the search repository. The
+output can be limited with the `-n`/`--limit` flag.
+
+Given a dependency `groupId:artifactId:version` argument, the tool will print whether this exact GAV is available in the search repository and indicate it in the exit
+status. If the dependency is not available it will also list available versions.
+
+Given a GitHub Pull Request URL, the tool will attempt to use the [`gh`](https://github.com/cli/cli) tool to get the Pull Request title. If this meets the expected Dependabot
+title format, the tool will extract the GAV from the title and act as if that GAV were specified directly.
+
 ## Building
 
 `./mvnw clean package`
