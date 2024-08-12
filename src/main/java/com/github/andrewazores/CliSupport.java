@@ -48,6 +48,15 @@ class CliSupport {
     }
 
     static record ScriptResult(int statusCode, List<String> out, List<String> err) {
+        void assertOk() {
+            if (!ok()) {
+                throw new RuntimeException(
+                        String.format(
+                                "%nstdout:%n%s%nstderr:%n%s",
+                                String.join("\n", out()), String.join("\n", err())));
+            }
+        }
+
         boolean ok() {
             return statusCode == 0;
         }

@@ -54,12 +54,7 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
         if (verbose) {
             System.out.println(proc.out());
         }
-        if (!proc.ok()) {
-            throw new RuntimeException(
-                    String.format(
-                            "%nstdout:%n%s%nstderr:%n%s",
-                            String.join("\n", proc.out()), String.join("\n", proc.err())));
-        }
+        proc.assertOk();
         var matcher = GH_PR_TITLE_PATTERN.matcher(proc.out().get(0));
         if (!matcher.matches()) {
             throw new RuntimeException(
