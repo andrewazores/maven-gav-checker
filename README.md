@@ -16,17 +16,6 @@ status. If the dependency is not available it will also list available versions.
 Given a GitHub Pull Request URL, the tool will attempt to use the [`gh`](https://github.com/cli/cli) tool to get the Pull Request title. If this meets the expected Dependabot
 title format, the tool will extract the GAV from the title and act as if that GAV were specified directly.
 
-## TODOs (PRs welcome)
-
-1. Recursive/transitive checks. It is probably safe to assume that if a dependency is available in the search repository that all of its transitive dependencies should be as
-well, but it would be even better to actually validate the whole tree. This would be useful in cases where a product team is responsible for building a dependency that they
-will use in their product, so there are cascading builds that may need to be done and may have overlapping responsibilities with other product teams.
-2. List checks. Given a list of GAVs, report on all of their status in the search repository.
-3. GitHub repository checks. Given a GitHub repository URL, take its `pom.xml` and parse out the direct dependencies, then report on this list of GAVs.
-4. Other version control host integrations, for platforms other than GitHub.
-5. Filter dependencies by scope, ie limit to compile/runtime in case test dependencies don't need to be available.
-6. Support parsing `build.gradle`.
-
 ## Building
 
 `./mvnw clean package`
