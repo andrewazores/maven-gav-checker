@@ -29,6 +29,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public record Versioning(String latest, String release, List<String> versions) {
+    public Versioning(String latest, String release, List<String> versions) {
+        this.latest = latest;
+        this.release = release;
+        this.versions = Collections.unmodifiableList(new ArrayList<>(versions));
+    }
+
     public Optional<String> contains(String version) {
         return versions.stream().filter(v -> versionCompare(version, v)).findFirst();
     }
@@ -42,8 +48,8 @@ public record Versioning(String latest, String release, List<String> versions) {
         var root = xmlDoc.getDocumentElement();
 
         var versioning = getChild(root, "versioning").orElseThrow();
-        var latest = getChild(versioning, "latest").orElseThrow().getTextContent();
-        var release = getChild(versioning, "release").orElseThrow().getTextContent();
+        var latest = getChild(versioning, "latest").map(Node::getTextContent).orElse("N/A");
+        var release = getChild(versioning, "release").map(Node::getTextContent).orElse("N/A");
         var versions = getChild(versioning, "versions").orElseThrow();
         var versionList =
                 new ArrayList<>(
@@ -52,7 +58,7 @@ public record Versioning(String latest, String release, List<String> versions) {
                                 .toList());
         Collections.reverse(versionList);
 
-        return new Versioning(latest, release, Collections.unmodifiableList(versionList));
+        return new Versioning(latest, release, versionList);
     }
 
     private static Optional<Node> getChild(Node parent, String childName) {

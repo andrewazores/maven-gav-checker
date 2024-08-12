@@ -29,8 +29,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.quarkus.logging.Log;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -39,7 +38,7 @@ import picocli.CommandLine.Parameters;
 @Command(
         name = "GAVFind",
         mixinStandardHelpOptions = true,
-        version = "GAVFind 0.1",
+        versionProvider = com.github.andrewazores.VersionProvider.class,
         description = "Check Maven dependencies' availability in a particular Maven repository")
 public class GAVFind implements Callable<Integer> {
 
@@ -63,7 +62,7 @@ public class GAVFind implements Callable<Integer> {
             names = {"-r", "--repository"},
             description =
                     "The Maven repository root URL to search, ex."
-                            + " https://repo.maven.apache.org/maven2/",
+                            + " https://repo.maven.apache.org/maven2/ .",
             defaultValue = "https://repo.maven.apache.org/maven2/")
     private String repoRoot;
 
@@ -71,22 +70,15 @@ public class GAVFind implements Callable<Integer> {
             names = {"-n", "--limit"},
             description =
                     "The number of release versions to list in version listing mode. Defaults to"
-                            + " the full list",
+                            + " the full list.",
             defaultValue = "-1")
     private int count;
 
     @Option(
             names = {"-k", "--insecure"},
-            description = "Disable TLS validation on the remote Maven repository",
+            description = "Disable TLS validation on the remote Maven repository.",
             defaultValue = "false")
     private boolean insecure;
-
-    @Option(
-            names = {"-v", "--verbose"},
-            description =
-                    "Enable verbose debugging output. Pass multiple times to increase log level.",
-            defaultValue = "false")
-    private boolean[] verbosity;
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new GAVFind()).execute(args);
@@ -95,25 +87,6 @@ public class GAVFind implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        String logLevel;
-        switch (verbosity.length) {
-            case 0:
-                logLevel = "INFO";
-                break;
-            case 1:
-                logLevel = verbosity[0] ? "DEBUG" : "INFO";
-                break;
-            case 2:
-                logLevel = "TRACE";
-                break;
-            default:
-                logLevel = "TRACE";
-                break;
-        }
-        System.setProperty(org.slf4j.simple.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, logLevel);
-        final Logger logger = LoggerFactory.getLogger(GAVFind.class);
-        logger.debug("logLevel={} due to verbosity={}", logLevel, verbosity);
-
         if (insecure) {
             disableTlsValidation();
         }
@@ -126,7 +99,7 @@ public class GAVFind implements Callable<Integer> {
         }
         var matcher = GAV_PATTERN.matcher(gav);
         if (!matcher.matches()) {
-            logger.error("GAV {} was not parseable", gav);
+            Log.errorv("GAV {0} was not parseable", gav);
             return 1;
         }
         var groupId = matcher.group("group");
@@ -134,18 +107,13 @@ public class GAVFind implements Callable<Integer> {
         var version = matcher.group("version");
         boolean exactMatch = !(version == null || "null".equals(version));
         if (exactMatch) {
-            logger.debug(
-                    "Searching {} for version {} of {} from {}",
-                    repoRoot,
-                    version,
-                    artifactId,
-                    groupId);
+            Log.debugv(
+                    "Searching {0} for version {1} of {2} from {333}",
+                    repoRoot, version, artifactId, groupId);
         } else {
-            logger.debug(
-                    "Searching {} for available versions of {} from {}",
-                    repoRoot,
-                    artifactId,
-                    groupId);
+            Log.debugv(
+                    "Searching {0} for available versions of {1} from {2}",
+                    repoRoot, artifactId, groupId);
         }
 
         var url =
@@ -153,10 +121,10 @@ public class GAVFind implements Callable<Integer> {
                         "%s/%s/%s/maven-metadata.xml",
                         repoRoot, groupId.replaceAll("\\.", "/"), artifactId);
         // TODO do this without opening the URL stream twice
-        logger.debug("Opening {} ...", url);
-        if (logger.isDebugEnabled()) {
+        Log.debugv("Opening {0} ...", url);
+        if (Log.isDebugEnabled()) {
             try (var stream = new BufferedInputStream(new URL(url).openStream())) {
-                logger.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+                Log.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
             }
         }
         var versioning = Versioning.from(url);
@@ -164,18 +132,16 @@ public class GAVFind implements Callable<Integer> {
         if (exactMatch) {
             var versionMatch = versioning.contains(version);
             if (versionMatch.isPresent()) {
-                logger.info(
-                        "{}:{}:{} is available as {} in {}",
+                Log.infov(
+                        "{0}:{1}:{2} is available as {3} in {4}",
+                        groupId, artifactId, version, versionMatch.get(), repoRoot);
+            } else {
+                Log.errorv(
+                        "{0}:{1}:{2} is NOT available in {3}.\navailable:\n{4}",
                         groupId,
                         artifactId,
                         version,
-                        versionMatch.get(),
-                        repoRoot);
-            } else {
-                logger.error(
-                        "{}:{}:{} is NOT available in {}", groupId, artifactId, version, repoRoot);
-                logger.error(
-                        "available:\n{}",
+                        repoRoot,
                         String.join(
                                 "\n",
                                 versioning.versions().stream()
@@ -185,10 +151,10 @@ public class GAVFind implements Callable<Integer> {
                 return 2;
             }
         } else {
-            logger.info("latest: {}", versioning.latest());
-            logger.info("release: {}", versioning.release());
-            logger.info(
-                    "available:\n{}",
+            Log.infov(
+                    "\nlatest: {0}\nrelease: {1}\navailable:\n{2}",
+                    versioning.latest(),
+                    versioning.release(),
                     String.join(
                             "\n",
                             versioning.versions().stream()

@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.quarkus.logging.Log;
 
 class GitHubIntegration implements Predicate<String>, IOFunction<String, String> {
     private static final Pattern GH_PR_TITLE_PATTERN =
@@ -29,7 +28,6 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
                             + " (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
 
-    private final Logger logger = LoggerFactory.getLogger(CliSupport.class);
     private final CliSupport cli = new CliSupport();
 
     static GitHubIntegration newInstance() {
@@ -45,7 +43,7 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
     public String apply(String url) throws IOException, InterruptedException {
         cli.testCommand("gh");
         var proc = cli.script("gh", "pr", "view", url, "--json", "title", "--jq", ".title");
-        logger.trace(proc.out().toString());
+        Log.trace(proc.out().toString());
         proc.assertOk();
         var matcher = GH_PR_TITLE_PATTERN.matcher(proc.out().get(0));
         if (!matcher.matches()) {

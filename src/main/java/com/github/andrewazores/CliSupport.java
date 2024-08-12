@@ -19,11 +19,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.quarkus.logging.Log;
 
 class CliSupport {
-    private final Logger logger = LoggerFactory.getLogger(CliSupport.class);
 
     void testCommand(String command) {
         try {
@@ -36,7 +34,7 @@ class CliSupport {
     }
 
     ScriptResult script(String... command) throws IOException, InterruptedException {
-        logger.trace(String.join(" ", Arrays.asList(command)));
+        Log.trace(String.join(" ", Arrays.asList(command)));
         var proc = new ProcessBuilder().command(command).start();
         var out = proc.inputReader().lines().toList();
         var err = proc.errorReader().lines().toList();
