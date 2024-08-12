@@ -16,7 +16,6 @@
 package com.github.andrewazores;
 
 import java.io.IOException;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import io.quarkus.logging.Log;
@@ -24,7 +23,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-class GitHubIntegration implements Predicate<String>, IOFunction<String, String> {
+class GitHubIntegration implements SourceIntegration {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
                     "^build\\(deps\\): bump (?<ga>[a-z0-9:._-]+) from (?:[a-z0-9._-]+) to"

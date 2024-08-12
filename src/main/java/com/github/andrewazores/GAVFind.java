@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import io.quarkus.arc.All;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
@@ -81,7 +83,7 @@ public class GAVFind implements Callable<Integer> {
             defaultValue = "false")
     private boolean insecure;
 
-    @Inject GitHubIntegration gitHubIntegration;
+    @Inject @All List<SourceIntegration> sourceIntegrations;
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new GAVFind()).execute(args);
@@ -96,8 +98,10 @@ public class GAVFind implements Callable<Integer> {
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
-        if (gitHubIntegration.test(gav)) {
-            gav = gitHubIntegration.apply(gav);
+        for (var integration : sourceIntegrations) {
+            if (integration.test(gav)) {
+                gav = integration.apply(gav);
+            }
         }
         var matcher = GAV_PATTERN.matcher(gav);
         if (!matcher.matches()) {
