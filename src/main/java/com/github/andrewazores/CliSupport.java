@@ -42,11 +42,12 @@ class CliSupport {
         }
         var proc = new ProcessBuilder().command(command).start();
         var out = proc.inputReader().lines().toList();
+        var err = proc.errorReader().lines().toList();
         int sc = proc.waitFor();
-        return new ScriptResult(sc, out);
+        return new ScriptResult(sc, out, err);
     }
 
-    static record ScriptResult(int statusCode, List<String> out) {
+    static record ScriptResult(int statusCode, List<String> out, List<String> err) {
         boolean ok() {
             return statusCode == 0;
         }
