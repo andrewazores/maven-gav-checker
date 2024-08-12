@@ -32,7 +32,7 @@ $ ./target/maven-gav-checker-*-runner -h
 2024-08-12 16:41:15,582 INFO  [io.quarkus] (main) Profile prod activated. 
 2024-08-12 16:41:15,582 INFO  [io.quarkus] (main) Installed features: [cdi, picocli]
 Usage: GAVFind [-hkV] [-n=<count>] [-r=<repoRoot>] <gav>
-Check Maven dependencies' availability in a particular Maven repository
+Check Maven dependencies availability in a particular Maven repository
       <gav>             The Maven dependency GroupId:ArtifactId[:Version]
                           (GAV), ex. org.slf4j:slf4j-api:2.0.12 or info.picocli:
                           picocli . If no version is specified (version listing
