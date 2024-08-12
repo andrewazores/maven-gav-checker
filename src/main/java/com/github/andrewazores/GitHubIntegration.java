@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class GitHubIntegration implements Predicate<String>, IOFunction<String, String> {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
@@ -26,20 +29,11 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
                             + " (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
 
-    private final boolean verbose;
-    private final CliSupport cli;
-
-    private GitHubIntegration(boolean verbose) {
-        this.verbose = verbose;
-        this.cli = new CliSupport(verbose);
-    }
-
-    static GitHubIntegration newInstance(boolean verbose) {
-        return new GitHubIntegration(verbose);
-    }
+    private final Logger logger = LoggerFactory.getLogger(CliSupport.class);
+    private final CliSupport cli = new CliSupport();
 
     static GitHubIntegration newInstance() {
-        return newInstance(false);
+        return new GitHubIntegration();
     }
 
     @Override
@@ -51,9 +45,7 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
     public String apply(String url) throws IOException, InterruptedException {
         cli.testCommand("gh");
         var proc = cli.script("gh", "pr", "view", url, "--json", "title", "--jq", ".title");
-        if (verbose) {
-            System.out.println(proc.out());
-        }
+        logger.trace(proc.out().toString());
         proc.assertOk();
         var matcher = GH_PR_TITLE_PATTERN.matcher(proc.out().get(0));
         if (!matcher.matches()) {

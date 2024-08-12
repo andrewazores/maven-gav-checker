@@ -19,12 +19,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-class CliSupport {
-    private final boolean verbose;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    CliSupport(boolean verbose) {
-        this.verbose = verbose;
-    }
+class CliSupport {
+    private final Logger logger = LoggerFactory.getLogger(CliSupport.class);
 
     void testCommand(String command) {
         try {
@@ -37,9 +36,7 @@ class CliSupport {
     }
 
     ScriptResult script(String... command) throws IOException, InterruptedException {
-        if (verbose) {
-            System.out.println(String.join(" ", Arrays.asList(command)));
-        }
+        logger.trace(String.join(" ", Arrays.asList(command)));
         var proc = new ProcessBuilder().command(command).start();
         var out = proc.inputReader().lines().toList();
         var err = proc.errorReader().lines().toList();

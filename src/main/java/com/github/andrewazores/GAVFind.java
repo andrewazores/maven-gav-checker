@@ -29,6 +29,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -85,8 +87,6 @@ public class GAVFind implements Callable<Integer> {
             defaultValue = "false")
     private boolean verbose;
 
-    private final GitHubIntegration gitHubIntegration = GitHubIntegration.newInstance();
-
     public static void main(String... args) {
         int exitCode = new CommandLine(new GAVFind()).execute(args);
         System.exit(exitCode);
@@ -94,18 +94,23 @@ public class GAVFind implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (verbose) {
+            System.setProperty(org.slf4j.simple.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE");
+        }
+        final Logger logger = LoggerFactory.getLogger(GAVFind.class);
         if (insecure) {
             disableTlsValidation();
         }
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
+        final GitHubIntegration gitHubIntegration = GitHubIntegration.newInstance();
         if (gitHubIntegration.test(gav)) {
             gav = gitHubIntegration.apply(gav);
         }
         var matcher = GAV_PATTERN.matcher(gav);
         if (!matcher.matches()) {
-            System.err.println(String.format("GAV \"%s\" was not parseable", gav));
+            logger.error("GAV {} was not parseable", gav);
             return 1;
         }
         var groupId = matcher.group("group");
@@ -113,15 +118,18 @@ public class GAVFind implements Callable<Integer> {
         var version = matcher.group("version");
         boolean exactMatch = !(version == null || "null".equals(version));
         if (exactMatch) {
-            System.out.println(
-                    String.format(
-                            "Searching %s for version \"%s\" of %s from %s",
-                            repoRoot, version, artifactId, groupId));
+            logger.debug(
+                    "Searching {} for version {} of {} from {}",
+                    repoRoot,
+                    version,
+                    artifactId,
+                    groupId);
         } else {
-            System.out.println(
-                    String.format(
-                            "Searching %s for available versions of %s from %s",
-                            repoRoot, artifactId, groupId));
+            logger.debug(
+                    "Searching {} for available versions of {} from {}",
+                    repoRoot,
+                    artifactId,
+                    groupId);
         }
 
         var url =
@@ -130,9 +138,9 @@ public class GAVFind implements Callable<Integer> {
                         repoRoot, groupId.replaceAll("\\.", "/"), artifactId);
         if (verbose) {
             // TODO do this without opening the URL stream twice
-            System.out.println(String.format("Opening %s ...", url));
+            logger.debug("Opening {} ...", url);
             try (var stream = new BufferedInputStream(new URL(url).openStream())) {
-                System.out.println(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+                logger.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
             }
         }
         var versioning = Versioning.from(url);
@@ -140,30 +148,37 @@ public class GAVFind implements Callable<Integer> {
         if (exactMatch) {
             var versionMatch = versioning.contains(version);
             if (versionMatch.isPresent()) {
-                System.out.println(
-                        String.format(
-                                "%s:%s:%s is available as %s in %s",
-                                groupId, artifactId, version, versionMatch.get(), repoRoot));
+                logger.info(
+                        "{}:{}:{} is available as {} in {}",
+                        groupId,
+                        artifactId,
+                        version,
+                        versionMatch.get(),
+                        repoRoot);
             } else {
-                System.err.println(
-                        String.format(
-                                "%s:%s:%s is NOT available in %s",
-                                groupId, artifactId, version, repoRoot));
-                System.err.println("available:");
-                versioning.versions().stream()
-                        .limit(count < 0 ? Integer.MAX_VALUE : count)
-                        .map(v -> "\t" + v)
-                        .forEach(System.err::println);
+                logger.error(
+                        "{}:{}:{} is NOT available in {}", groupId, artifactId, version, repoRoot);
+                logger.error(
+                        "available:\n{}",
+                        String.join(
+                                "\n",
+                                versioning.versions().stream()
+                                        .limit(count < 0 ? Integer.MAX_VALUE : count)
+                                        .map(v -> "\t" + v)
+                                        .toList()));
                 return 2;
             }
         } else {
-            System.out.println(String.format("latest: %s%n", versioning.latest()));
-            System.out.println(String.format("release: %s%n", versioning.release()));
-            System.out.println("available:");
-            versioning.versions().stream()
-                    .limit(count < 0 ? Integer.MAX_VALUE : count)
-                    .map(v -> "\t" + v)
-                    .forEach(System.out::println);
+            logger.info("latest: {}", versioning.latest());
+            logger.info("release: {}", versioning.release());
+            logger.info(
+                    "available:\n{}",
+                    String.join(
+                            "\n",
+                            versioning.versions().stream()
+                                    .limit(count < 0 ? Integer.MAX_VALUE : count)
+                                    .map(v -> "\t" + v)
+                                    .toList()));
         }
 
         return 0;
