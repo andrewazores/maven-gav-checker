@@ -33,6 +33,7 @@ import javax.net.ssl.X509TrustManager;
 import io.quarkus.arc.All;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -65,9 +66,15 @@ public class GAVFind implements Callable<Integer> {
             names = {"-r", "--repository"},
             description =
                     "The Maven repository root URL to search, ex."
-                            + " https://repo.maven.apache.org/maven2/ .",
+                        + " https://repo.maven.apache.org/maven2/ . If the configuration property"
+                        + " gav-checker.maven-repository.url (or the environment variable"
+                        + " GAV_CHECKER_MAVEN_REPOSITORY_URL) is set, that will take precedence"
+                        + " over this option.",
             defaultValue = "https://repo.maven.apache.org/maven2/")
     private String repoRoot;
+
+    @ConfigProperty(name = "gav-checker.maven-repository.url")
+    String configRepoRoot;
 
     @Option(
             names = {"-n", "--limit"},
@@ -79,9 +86,16 @@ public class GAVFind implements Callable<Integer> {
 
     @Option(
             names = {"-k", "--insecure"},
-            description = "Disable TLS validation on the remote Maven repository.",
+            description =
+                    "Disable TLS validation on the remote Maven repository. This can also be set"
+                        + " with the configuration property"
+                        + " gav-checker.maven-repository.skip-tls-validation (or the environment"
+                        + " variable GAV_CHECKER_MAVEN_REPOSITORY_SKIP_TLS_VALIDATION).",
             defaultValue = "false")
     private boolean insecure;
+
+    @ConfigProperty(name = "gav-checker.maven-repository.skip-tls-validation")
+    boolean configInsecure;
 
     @Inject @All List<SourceIntegration> sourceIntegrations;
 
@@ -92,8 +106,11 @@ public class GAVFind implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (insecure) {
+        if (insecure || configInsecure) {
             disableTlsValidation();
+        }
+        if (configRepoRoot != null && !configRepoRoot.isBlank()) {
+            repoRoot = configRepoRoot;
         }
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
