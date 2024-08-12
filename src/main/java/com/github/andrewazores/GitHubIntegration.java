@@ -20,7 +20,10 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
+@ApplicationScoped
 class GitHubIntegration implements Predicate<String>, IOFunction<String, String> {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
@@ -28,11 +31,7 @@ class GitHubIntegration implements Predicate<String>, IOFunction<String, String>
                             + " (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
 
-    private final CliSupport cli = new CliSupport();
-
-    static GitHubIntegration newInstance() {
-        return new GitHubIntegration();
-    }
+    @Inject CliSupport cli;
 
     @Override
     public boolean test(String url) {

@@ -30,6 +30,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import io.quarkus.logging.Log;
+import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -80,6 +81,8 @@ public class GAVFind implements Callable<Integer> {
             defaultValue = "false")
     private boolean insecure;
 
+    @Inject GitHubIntegration gitHubIntegration;
+
     public static void main(String... args) {
         int exitCode = new CommandLine(new GAVFind()).execute(args);
         System.exit(exitCode);
@@ -93,7 +96,6 @@ public class GAVFind implements Callable<Integer> {
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
-        final GitHubIntegration gitHubIntegration = GitHubIntegration.newInstance();
         if (gitHubIntegration.test(gav)) {
             gav = gitHubIntegration.apply(gav);
         }

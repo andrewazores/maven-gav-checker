@@ -20,9 +20,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
 
+@ApplicationScoped
 class CliSupport {
-
     void testCommand(String command) {
         try {
             if (!script("command", "-v", command).ok()) {
