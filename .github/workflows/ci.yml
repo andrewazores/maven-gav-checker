@@ -22,10 +22,11 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
-    - run: ./mvnw package
+    - run: ./mvnw -Pjar package
+    - run: ./mvnw -Pnative package
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "target/maven-gav-checker-*-runner"
+        artifacts: "target/maven-gav-checker-*-runner,target/maven-gav-checker-*-runner.jar"
         artifactErrorsFailBuild: true
         generateReleaseNotes: true
         makeLatest: true
