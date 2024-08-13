@@ -1,33 +1,31 @@
-name: Releases
+name: CI build
 
-on: 
+concurrency:
+  group: ci-${{ github.run_id }}
+  cancel-in-progress: true
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
   push:
-    tags:
-    - '*'
+    branches:
+      - '**'
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-    - uses: actions/checkout@v3
     - uses: actions/checkout@v4
       with:
-        submodules: true
         fetch-depth: 0
     - uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
-    - run: ./mvnw -Pjar package
-    - run: ./mvnw -Pnative package
-    - uses: ncipollo/release-action@v1
-      with:
-        artifacts: "target/maven-gav-checker-*-runner,target/maven-gav-checker-*-runner.jar"
-        artifactErrorsFailBuild: true
-        generateReleaseNotes: true
-        makeLatest: true
-        prerelease: true
+    - run: ./mvnw verify
