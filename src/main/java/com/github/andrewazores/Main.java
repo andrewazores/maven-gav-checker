@@ -112,6 +112,9 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (gavs == null || gavs.isEmpty()) {
+            throw new IllegalArgumentException("No GAV arguments");
+        }
         if (insecure || configInsecure) {
             disableTlsValidation();
         }
