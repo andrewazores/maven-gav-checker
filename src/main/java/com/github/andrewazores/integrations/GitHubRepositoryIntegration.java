@@ -23,8 +23,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.github.andrewazores.CliSupport;
 import com.github.andrewazores.model.GroupArtifactVersion;
+import com.github.andrewazores.scripting.CliSupport;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -48,6 +48,9 @@ class GitHubRepositoryIntegration implements SourceIntegration {
 
     @ConfigProperty(name = "maven-gav-checker.include-scope")
     String includeScope;
+
+    @ConfigProperty(name = "maven-gav-checker.include-parent-pom")
+    boolean includeParentPom;
 
     @Override
     public boolean test(URL url) {
@@ -89,7 +92,7 @@ class GitHubRepositoryIntegration implements SourceIntegration {
                             "-Dsilent",
                             String.format("-DincludeScope=%s", includeScope),
                             String.format("-DexcludeTransitive=%b", !enableTransitiveDeps),
-                            "-DincludeParents",
+                            String.format("-DincludeParents=%b", includeParentPom),
                             "-Dmdep.outputScope=false",
                             String.format("-DoutputFile=%s", depsFile.toAbsolutePath().toString()),
                             String.format("--file=%s", pom.toAbsolutePath().toString()),

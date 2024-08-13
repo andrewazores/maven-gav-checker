@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.scripting;
 
-class UnavailableCommandException extends RuntimeException {
-    UnavailableCommandException(String command) {
+public class UnavailableCommandException extends RuntimeException {
+    public UnavailableCommandException(String command) {
         super(String.format("%s not found in $PATH", command));
     }
 
-    UnavailableCommandException(String command, Throwable cause) {
+    public UnavailableCommandException(String command, Throwable cause) {
         super(String.format("%s not found in $PATH", command), cause);
     }
 }

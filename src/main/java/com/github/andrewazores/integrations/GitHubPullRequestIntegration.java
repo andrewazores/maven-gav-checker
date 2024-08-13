@@ -20,8 +20,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.github.andrewazores.CliSupport;
 import com.github.andrewazores.model.GroupArtifactVersion;
+import com.github.andrewazores.scripting.CliSupport;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
