@@ -32,6 +32,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import io.quarkus.arc.All;
+import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
@@ -67,9 +68,9 @@ public class Main implements Callable<Integer> {
             description =
                     "The Maven repository root URL to search, ex."
                         + " https://repo.maven.apache.org/maven2/ . If the configuration property"
-                        + " gav-checker.maven-repository.url (or the environment variable"
-                        + " GAV_CHECKER_MAVEN_REPOSITORY_URL) is set, that will take precedence"
-                        + " over this option.",
+                        + " maven-gav-checker.maven-repository.url (or the environment variable"
+                        + " MAVEN_GAV_CHECKER_MAVEN_REPOSITORY_URL) is set, that will take"
+                        + " precedence over this option.",
             defaultValue = "https://repo.maven.apache.org/maven2/")
     private String repoRoot;
 
@@ -88,9 +89,10 @@ public class Main implements Callable<Integer> {
             names = {"-k", "--insecure"},
             description =
                     "Disable TLS validation on the remote Maven repository. This can also be set"
-                        + " with the configuration property"
-                        + " gav-checker.maven-repository.skip-tls-validation (or the environment"
-                        + " variable GAV_CHECKER_MAVEN_REPOSITORY_SKIP_TLS_VALIDATION).",
+                            + " with the configuration property"
+                            + " maven-gav-checker.maven-repository.skip-tls-validation (or the"
+                            + " environment variable"
+                            + " MAVEN_GAV_CHECKER_MAVEN_REPOSITORY_SKIP_TLS_VALIDATION).",
             defaultValue = "false")
     private boolean insecure;
 
@@ -119,10 +121,20 @@ public class Main implements Callable<Integer> {
         Collection<GroupArtifactVersion> gavs = new CopyOnWriteArrayList<>();
         try {
             var url = new URL(gav);
+            boolean matched = false;
             for (var integration : sourceIntegrations) {
-                if (integration.test(url)) {
+                boolean applies = integration.test(url);
+                matched |= applies;
+                Log.debugv(
+                        "integration {0} applies to {1} -> {2}",
+                        integration.getClass().getName(), url, applies);
+                if (applies) {
                     gavs.addAll(integration.apply(url));
+                    Log.trace(gavs.toString());
                 }
+            }
+            if (!matched) {
+                throw new RuntimeException("No matching integrations found for provided URL");
             }
         } catch (IOException | InterruptedException mue) {
             var matcher = GAV_PATTERN.matcher(gav);
@@ -135,6 +147,7 @@ public class Main implements Callable<Integer> {
                 gavs.add(new GroupArtifactVersion(groupId, artifactId, version));
             }
         }
+        Log.tracev("Processing GAVs: {0}", gavs);
         return processor.execute(gavs, repoRoot, count).get();
     }
 

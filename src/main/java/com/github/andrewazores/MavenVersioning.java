@@ -25,7 +25,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public record MavenVersioning(String latest, String release, List<String> versions) {
@@ -47,47 +46,20 @@ public record MavenVersioning(String latest, String release, List<String> versio
 
         var root = xmlDoc.getDocumentElement();
 
-        var versioning = getChild(root, "versioning").orElseThrow();
-        var latest = getChild(versioning, "latest").map(Node::getTextContent).orElse("N/A");
-        var release = getChild(versioning, "release").map(Node::getTextContent).orElse("N/A");
-        var versions = getChild(versioning, "versions").orElseThrow();
+        var versioning = XmlParser.getChild(root, "versioning").orElseThrow();
+        var latest =
+                XmlParser.getChild(versioning, "latest").map(Node::getTextContent).orElse("N/A");
+        var release =
+                XmlParser.getChild(versioning, "release").map(Node::getTextContent).orElse("N/A");
+        var versions = XmlParser.getChild(versioning, "versions").orElseThrow();
         var versionList =
                 new ArrayList<>(
-                        getChildren(versions, "version").stream()
+                        XmlParser.getChildren(versions, "version").stream()
                                 .map(Node::getTextContent)
                                 .toList());
         Collections.reverse(versionList);
 
         return new MavenVersioning(latest, release, versionList);
-    }
-
-    private static Optional<Node> getChild(Node parent, String childName) {
-        NodeList list = parent.getChildNodes();
-        int idx = 0;
-        while (idx < list.getLength()) {
-            var node = list.item(idx);
-            var name = node.getNodeName();
-            if (childName.equals(name)) {
-                return Optional.of(node);
-            }
-            idx++;
-        }
-        return Optional.empty();
-    }
-
-    private static List<Node> getChildren(Node parent, String childName) {
-        List<Node> out = new ArrayList<>();
-        NodeList list = parent.getChildNodes();
-        int idx = 0;
-        while (idx < list.getLength()) {
-            var node = list.item(idx);
-            var name = node.getNodeName();
-            if (childName.equals(name)) {
-                out.add(node);
-            }
-            idx++;
-        }
-        return out;
     }
 
     private static boolean versionCompare(String request, String found) {
