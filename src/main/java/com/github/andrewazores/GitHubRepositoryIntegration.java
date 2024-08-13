@@ -44,6 +44,9 @@ class GitHubRepositoryIntegration implements SourceIntegration {
     @ConfigProperty(name = "maven-gav-checker.integration.github-repository.transitive-deps")
     boolean enableTransitiveDeps;
 
+    @ConfigProperty(name = "maven-gav-checker.integration.github-repository.includeScope")
+    String includeScope;
+
     @Override
     public boolean test(URL url) {
         Log.debugv("Testing {0} on {1}", GH_REPO_PATTERN.pattern(), url.toString());
@@ -81,7 +84,7 @@ class GitHubRepositoryIntegration implements SourceIntegration {
                             "-B",
                             "-q",
                             "-Dsilent",
-                            "-DincludeScope=compile",
+                            String.format("-DincludeScope=%s", includeScope),
                             String.format("-DexcludeTransitive=%b", !enableTransitiveDeps),
                             "-DincludeParents",
                             "-Dmdep.outputScope=false",
