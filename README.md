@@ -19,6 +19,9 @@ title format, the tool will extract the GAV from the title and act as if that GA
 Given a GitHub repository URL, the tool will attempt to use `gh` to get the repository's `pom.xml` from its default branch. Then it will use `mvn` to resolve all of the
 project dependencies, and report on this list of GAVs.
 
+Given an HTTP(S) or `file:` URL ending with `.xml`, the tool will attempt to download or open the file at the given path, expecting it to be a `pom.xml`. Then it will use`mvn` to resolve
+the project depenendencies and report on this list of GAVs.
+
 ## Building
 
 `./mvnw clean package`

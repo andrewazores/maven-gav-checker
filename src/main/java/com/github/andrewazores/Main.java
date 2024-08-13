@@ -61,11 +61,9 @@ public class Main implements Callable<Integer> {
                         + " ex. org.slf4j:slf4j-api:2.0.12 or info.picocli:picocli . If no version"
                         + " is specified (version listing mode) then all available versions are"
                         + " printed, otherwise the existence of the specified version is checked."
-                        + " If the GitHub 'gh' client is installed, this can also be a GitHub Pull"
-                        + " Request URL and the PR title will be used to infer the GAV. If 'gh' and"
-                        + " 'mvn' are available then this may also be a GitHub repository URL, in"
-                        + " which case all dependencies of the 'pom.xml' of the repository's"
-                        + " default branch will be checked.")
+                        + " Rather than GAVs, these may also be URLs to pom.xml files, or GitHub"
+                        + " Repositories, or GitHub Pull Requests, in which case the tool will"
+                        + " infer the relevant GAVs.")
     private List<String> gavs;
 
     @Option(
