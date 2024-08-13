@@ -185,13 +185,31 @@
   <profile>
     <id>native</id>
     <activation>
-      <property>
-        <name>native</name>
-      </property>
+      <activeByDefault>true</activeByDefault>
     </activation>
     <properties>
       <skipITs>false</skipITs>
       <quarkus.native.enabled>true</quarkus.native.enabled>
+      <quarkus.native.compression.level>7</quarkus.native.compression.level>
+      <quarkus.native.compression.additional-args>-v,--lzma</quarkus.native.compression.additional-args>
+      <quarkus.native.additional-build-args>--enable-url-protocols=https,-ea,-esa</quarkus.native.additional-build-args>
+      <quarkus.vm.additionalArgs>-ea</quarkus.vm.additionalArgs>
+      <quarkus.native.enable-http-url-handler>true</quarkus.native.enable-http-url-handler>
+      <quarkus.native.enable-https-url-handler>true</quarkus.native.enable-https-url-handler>
+      <quarkus.native.container-build>true</quarkus.native.container-build>
+      <quarkus.native.container-runtime>podman-rootless</quarkus.native.container-runtime>
+    </properties>
+  </profile>
+  <profile>
+    <id>jar</id>
+    <activation>
+      <property>
+        <name>jar</name>
+      </property>
+    </activation>
+    <properties>
+      <skipITs>false</skipITs>
+      <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
     </properties>
   </profile>
 </profiles>
