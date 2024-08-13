@@ -15,10 +15,7 @@
  */
 package com.github.andrewazores;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -142,13 +139,6 @@ class Processor {
                 String.format(
                         "%s/%s/%s/maven-metadata.xml",
                         repoRoot, gav.groupId().replaceAll("\\.", "/"), gav.artifactId());
-        Log.debugv("Opening {0} ...", url);
-        if (Log.isDebugEnabled()) {
-            // TODO do this without opening the URL stream twice
-            try (var stream = new BufferedInputStream(new URL(url).openStream())) {
-                Log.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
-            }
-        }
         var versioning = MavenVersioning.from(url);
 
         if (exactMatch) {

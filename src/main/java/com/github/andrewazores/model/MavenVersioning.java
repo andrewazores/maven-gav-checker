@@ -15,7 +15,10 @@
  */
 package com.github.andrewazores.model;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +28,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import com.github.andrewazores.util.XmlParser;
+import io.quarkus.logging.Log;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -39,11 +43,19 @@ public record MavenVersioning(String latest, String release, List<String> versio
         return versions.stream().filter(v -> versionCompare(version, v)).findFirst();
     }
 
-    public static MavenVersioning from(String uri)
+    public static MavenVersioning from(String url)
             throws IOException, ParserConfigurationException, SAXException {
         var factory = DocumentBuilderFactory.newDefaultInstance();
         var documentBuilder = factory.newDocumentBuilder();
-        var xmlDoc = documentBuilder.parse(uri);
+
+        Log.debugv("Opening {0} ...", url);
+        if (Log.isDebugEnabled()) {
+            // TODO do this without opening the URL stream twice
+            try (var stream = new BufferedInputStream(new URL(url).openStream())) {
+                Log.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+            }
+        }
+        var xmlDoc = documentBuilder.parse(url);
 
         var root = xmlDoc.getDocumentElement();
 
