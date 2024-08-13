@@ -15,8 +15,9 @@
  */
 package com.github.andrewazores;
 
-import java.net.URL;
-import java.util.List;
-import java.util.function.Predicate;
-
-interface SourceIntegration extends Predicate<URL>, IOFunction<URL, List<GroupArtifactVersion>> {}
+record GroupArtifactVersion(String groupId, String artifactId, String version) {
+    @Override
+    public String toString() {
+        return String.format("%s:%s:%s", groupId, artifactId, version);
+    }
+}

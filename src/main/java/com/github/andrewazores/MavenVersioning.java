@@ -28,8 +28,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-public record Versioning(String latest, String release, List<String> versions) {
-    public Versioning(String latest, String release, List<String> versions) {
+public record MavenVersioning(String latest, String release, List<String> versions) {
+    public MavenVersioning(String latest, String release, List<String> versions) {
         this.latest = latest;
         this.release = release;
         this.versions = Collections.unmodifiableList(new ArrayList<>(versions));
@@ -39,7 +39,7 @@ public record Versioning(String latest, String release, List<String> versions) {
         return versions.stream().filter(v -> versionCompare(version, v)).findFirst();
     }
 
-    public static Versioning from(String uri)
+    public static MavenVersioning from(String uri)
             throws IOException, ParserConfigurationException, SAXException {
         var factory = DocumentBuilderFactory.newDefaultInstance();
         var documentBuilder = factory.newDocumentBuilder();
@@ -58,7 +58,7 @@ public record Versioning(String latest, String release, List<String> versions) {
                                 .toList());
         Collections.reverse(versionList);
 
-        return new Versioning(latest, release, versionList);
+        return new MavenVersioning(latest, release, versionList);
     }
 
     private static Optional<Node> getChild(Node parent, String childName) {

@@ -17,6 +17,7 @@ package com.github.andrewazores;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import io.quarkus.logging.Log;
@@ -24,19 +25,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-class GitHubIntegration implements SourceIntegration {
+class GitHubPullRequestIntegration implements SourceIntegration {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
-                    "^build\\(deps\\): bump (?<ga>[a-z0-9._-]+:[a-z0-9._-]+) from (?:[a-z0-9._-]+)"
-                            + " to (?<version>[a-z0-9._-]+)$",
+                    "^build\\(deps\\): bump (?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+) from"
+                            + " (?:[a-z0-9._-]+) to (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
 
     @Inject CliSupport cli;
 
     @Override
-    public boolean test(String i) {
+    public boolean test(URL url) {
         try {
-            var url = new URL(i);
             return ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))
                     && "github.com".equals(url.getHost())
                     && url.getPath().matches("^/(?:[\\w]+)/(?:[\\w]+)/pull/(?:[\\d]+)$");
@@ -47,9 +47,10 @@ class GitHubIntegration implements SourceIntegration {
     }
 
     @Override
-    public String apply(String url) throws IOException, InterruptedException {
+    public List<GroupArtifactVersion> apply(URL url) throws IOException, InterruptedException {
         cli.testCommand("gh");
-        var proc = cli.script("gh", "pr", "view", url, "--json", "title", "--jq", ".title");
+        var proc =
+                cli.script("gh", "pr", "view", url.toString(), "--json", "title", "--jq", ".title");
         Log.trace(proc.out().toString());
         proc.assertOk();
         var matcher = GH_PR_TITLE_PATTERN.matcher(proc.out().get(0));
@@ -62,11 +63,12 @@ class GitHubIntegration implements SourceIntegration {
                                 + " dependency group?",
                             url, proc.out().get(0)));
         }
-        var ga = matcher.group("ga");
+        var group = matcher.group("group");
+        var artifact = matcher.group("artifact");
         var version = matcher.group("version");
         Log.debugv(
-                "Interpreted GitHub PR title \"{0}\" as request for {1}:{2}",
-                proc.out().get(0), ga, version);
-        return String.format("%s:%s", ga, version);
+                "Interpreted GitHub PR title \"{0}\" as request for {1}:{2}:{3}",
+                proc.out().get(0), group, artifact, version);
+        return List.of(new GroupArtifactVersion(group, artifact, version));
     }
 }

@@ -15,14 +15,15 @@
  */
 package com.github.andrewazores;
 
-import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -31,7 +32,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import io.quarkus.arc.All;
-import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
@@ -40,11 +40,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(
-        name = "GAVFind",
+        name = "maven-gav-checker",
         mixinStandardHelpOptions = true,
         versionProvider = com.github.andrewazores.VersionProvider.class,
         description = "Check Maven dependencies' availability in a particular Maven repository")
-public class GAVFind implements Callable<Integer> {
+public class Main implements Callable<Integer> {
 
     private static final Pattern GAV_PATTERN =
             Pattern.compile(
@@ -98,9 +98,10 @@ public class GAVFind implements Callable<Integer> {
     boolean configInsecure;
 
     @Inject @All List<SourceIntegration> sourceIntegrations;
+    @Inject Processor processor;
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new GAVFind()).execute(args);
+        int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
     }
 
@@ -115,78 +116,26 @@ public class GAVFind implements Callable<Integer> {
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
-        for (var integration : sourceIntegrations) {
-            if (integration.test(gav)) {
-                gav = integration.apply(gav);
+        Collection<GroupArtifactVersion> gavs = new CopyOnWriteArrayList<>();
+        try {
+            var url = new URL(gav);
+            for (var integration : sourceIntegrations) {
+                if (integration.test(url)) {
+                    gavs.addAll(integration.apply(url));
+                }
             }
-        }
-        var matcher = GAV_PATTERN.matcher(gav);
-        if (!matcher.matches()) {
-            Log.errorv("GAV {0} was not parseable", gav);
-            return 1;
-        }
-        var groupId = matcher.group("group");
-        var artifactId = matcher.group("artifact");
-        var version = matcher.group("version");
-        boolean exactMatch = !(version == null || "null".equals(version));
-        if (exactMatch) {
-            Log.debugv(
-                    "Searching {0} for version {1} of {2} from {333}",
-                    repoRoot, version, artifactId, groupId);
-        } else {
-            Log.debugv(
-                    "Searching {0} for available versions of {1} from {2}",
-                    repoRoot, artifactId, groupId);
-        }
-
-        var url =
-                String.format(
-                        "%s/%s/%s/maven-metadata.xml",
-                        repoRoot, groupId.replaceAll("\\.", "/"), artifactId);
-        // TODO do this without opening the URL stream twice
-        Log.debugv("Opening {0} ...", url);
-        if (Log.isDebugEnabled()) {
-            try (var stream = new BufferedInputStream(new URL(url).openStream())) {
-                Log.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
-            }
-        }
-        var versioning = Versioning.from(url);
-
-        if (exactMatch) {
-            var versionMatch = versioning.contains(version);
-            if (versionMatch.isPresent()) {
-                Log.infov(
-                        "{0}:{1}:{2} is available as {3} in {4}",
-                        groupId, artifactId, version, versionMatch.get(), repoRoot);
+        } catch (IOException | InterruptedException mue) {
+            var matcher = GAV_PATTERN.matcher(gav);
+            if (!matcher.matches()) {
+                throw new RuntimeException(String.format("GAV %s was not parseable", gav));
             } else {
-                Log.errorv(
-                        "{0}:{1}:{2} is NOT available in {3}.\navailable:\n{4}",
-                        groupId,
-                        artifactId,
-                        version,
-                        repoRoot,
-                        String.join(
-                                "\n",
-                                versioning.versions().stream()
-                                        .limit(count < 0 ? Integer.MAX_VALUE : count)
-                                        .map(v -> "\t" + v)
-                                        .toList()));
-                return 2;
+                var groupId = matcher.group("group");
+                var artifactId = matcher.group("artifact");
+                var version = matcher.group("version");
+                gavs.add(new GroupArtifactVersion(groupId, artifactId, version));
             }
-        } else {
-            Log.infov(
-                    "\nlatest: {0}\nrelease: {1}\navailable:\n{2}",
-                    versioning.latest(),
-                    versioning.release(),
-                    String.join(
-                            "\n",
-                            versioning.versions().stream()
-                                    .limit(count < 0 ? Integer.MAX_VALUE : count)
-                                    .map(v -> "\t" + v)
-                                    .toList()));
         }
-
-        return 0;
+        return processor.execute(gavs, repoRoot, count).get();
     }
 
     private void disableTlsValidation() throws NoSuchAlgorithmException, KeyManagementException {
