@@ -39,8 +39,12 @@ public record MavenVersioning(String latest, String release, List<String> versio
         this.versions = Collections.unmodifiableList(new ArrayList<>(versions));
     }
 
-    public Optional<String> contains(String version) {
-        return versions.stream().filter(v -> versionCompare(version, v)).findFirst();
+    public boolean contains(String version) {
+        return versions.stream().anyMatch(v -> versionCompare(version, v));
+    }
+
+    public Optional<String> bestMatch(GroupArtifactVersion gav) {
+        return versions.stream().filter(v -> versionCompare(gav.version(), v)).findFirst();
     }
 
     public static MavenVersioning from(String url)

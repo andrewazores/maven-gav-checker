@@ -48,9 +48,7 @@ class Processor {
                                     () -> {
                                         try {
                                             process(latch, repoRoot, gav, count, results);
-                                        } catch (IOException
-                                                | ParserConfigurationException
-                                                | SAXException e) {
+                                        } catch (Exception e) {
                                             Log.error(e);
                                         } finally {
                                             latch.countDown();
@@ -142,17 +140,19 @@ class Processor {
         var versioning = MavenVersioning.from(url);
 
         if (exactMatch) {
-            var versionMatch = versioning.contains(gav.version());
-            if (versionMatch.isPresent()) {
-                results.put(
-                        gav,
-                        new ProcessResult(
-                                true,
-                                new MavenVersioning(
-                                        gav.toString(), gav.toString(), List.of(gav.toString()))));
-            } else {
-                results.put(gav, new ProcessResult(false, versioning));
-            }
+            versioning
+                    .bestMatch(gav)
+                    .ifPresentOrElse(
+                            match ->
+                                    results.put(
+                                            gav,
+                                            new ProcessResult(
+                                                    true,
+                                                    new MavenVersioning(
+                                                            match,
+                                                            match,
+                                                            List.of(match)))),
+                            () -> results.put(gav, new ProcessResult(false, versioning)));
         } else {
             results.put(gav, new ProcessResult(!versioning.versions().isEmpty(), versioning));
         }
