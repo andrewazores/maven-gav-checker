@@ -28,4 +28,4 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
-    - run: ./mvnw verify
+    - run: ./mvnw -Pjar verify
