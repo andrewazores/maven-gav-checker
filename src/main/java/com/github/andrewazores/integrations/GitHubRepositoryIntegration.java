@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.integrations;
 
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.github.andrewazores.CliSupport;
+import com.github.andrewazores.model.GroupArtifactVersion;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

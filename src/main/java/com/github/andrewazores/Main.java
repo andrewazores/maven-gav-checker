@@ -31,6 +31,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.github.andrewazores.integrations.SourceIntegration;
+import com.github.andrewazores.model.GroupArtifactVersion;
 import io.quarkus.arc.All;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;

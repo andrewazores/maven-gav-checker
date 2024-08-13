@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +22,11 @@ import java.util.Optional;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-class XmlParser {
+public class XmlParser {
 
-    static Optional<Node> getChild(Node parent, String childName) {
+    private XmlParser() {}
+
+    public static Optional<Node> getChild(Node parent, String childName) {
         NodeList list = parent.getChildNodes();
         int idx = 0;
         while (idx < list.getLength()) {
@@ -38,7 +40,7 @@ class XmlParser {
         return Optional.empty();
     }
 
-    static List<Node> getChildren(Node parent, String childName) {
+    public static List<Node> getChildren(Node parent, String childName) {
         List<Node> out = new ArrayList<>();
         NodeList list = parent.getChildNodes();
         int idx = 0;

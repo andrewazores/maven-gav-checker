@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.util;
 
-import java.net.URL;
-import java.util.List;
-import java.util.function.Predicate;
+import java.io.IOException;
 
-interface SourceIntegration extends Predicate<URL>, IOFunction<URL, List<GroupArtifactVersion>> {}
+public interface IOFunction<I, O> {
+    O apply(I i) throws IOException, InterruptedException;
+}

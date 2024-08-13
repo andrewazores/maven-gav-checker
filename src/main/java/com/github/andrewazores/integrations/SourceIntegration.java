@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.integrations;
 
-record GroupArtifactVersion(String groupId, String artifactId, String version) {
-    @Override
-    public String toString() {
-        return String.format("%s:%s:%s", groupId, artifactId, version);
-    }
-}
+import java.net.URL;
+import java.util.List;
+import java.util.function.Predicate;
+
+import com.github.andrewazores.model.GroupArtifactVersion;
+import com.github.andrewazores.util.IOFunction;
+
+public interface SourceIntegration
+        extends Predicate<URL>, IOFunction<URL, List<GroupArtifactVersion>> {}

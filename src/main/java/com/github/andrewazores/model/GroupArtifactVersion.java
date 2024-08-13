@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.model;
 
-import java.io.IOException;
-
-public interface IOFunction<I, O> {
-    O apply(I i) throws IOException, InterruptedException;
+public record GroupArtifactVersion(String groupId, String artifactId, String version) {
+    @Override
+    public String toString() {
+        return String.format("%s:%s:%s", groupId, artifactId, version);
+    }
 }

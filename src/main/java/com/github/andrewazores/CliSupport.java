@@ -23,8 +23,8 @@ import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-class CliSupport {
-    void testCommand(String command) {
+public class CliSupport {
+    public void testCommand(String command) {
         try {
             if (!script("command", "-v", command).ok()) {
                 throw new UnavailableCommandException(command);
@@ -34,7 +34,7 @@ class CliSupport {
         }
     }
 
-    ScriptResult script(String... command) throws IOException, InterruptedException {
+    public ScriptResult script(String... command) throws IOException, InterruptedException {
         Log.trace(String.join(" ", Arrays.asList(command)));
         var proc = new ProcessBuilder().command(command).start();
         var out = proc.inputReader().lines().toList();
@@ -43,8 +43,8 @@ class CliSupport {
         return new ScriptResult(sc, out, err);
     }
 
-    static record ScriptResult(int statusCode, List<String> out, List<String> err) {
-        ScriptResult assertOk() {
+    public static record ScriptResult(int statusCode, List<String> out, List<String> err) {
+        public ScriptResult assertOk() {
             if (!ok()) {
                 throw new RuntimeException(
                         String.format(
@@ -54,7 +54,7 @@ class CliSupport {
             return this;
         }
 
-        boolean ok() {
+        public boolean ok() {
             return statusCode == 0;
         }
     }

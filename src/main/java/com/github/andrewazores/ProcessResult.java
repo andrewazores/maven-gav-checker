@@ -15,6 +15,6 @@
  */
 package com.github.andrewazores;
 
-import java.util.List;
+import com.github.andrewazores.model.MavenVersioning;
 
-record ProcessResult(boolean available, List<GroupArtifactVersion> versions) {}
+record ProcessResult(boolean available, MavenVersioning versioning) {}

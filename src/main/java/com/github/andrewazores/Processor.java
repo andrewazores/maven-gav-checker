@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.github.andrewazores.model.GroupArtifactVersion;
+import com.github.andrewazores.model.MavenVersioning;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.xml.sax.SAXException;
@@ -75,7 +77,7 @@ class Processor {
                                             gav.groupId(),
                                             gav.artifactId(),
                                             gav.version(),
-                                            entry.getValue().versions().get(0),
+                                            entry.getValue().versioning().versions().get(0),
                                             repoRoot);
                                 } else {
                                     Log.errorv(
@@ -86,7 +88,11 @@ class Processor {
                                             repoRoot,
                                             String.join(
                                                     "\n",
-                                                    entry.getValue().versions().stream()
+                                                    entry
+                                                            .getValue()
+                                                            .versioning()
+                                                            .versions()
+                                                            .stream()
                                                             .limit(
                                                                     count < 0
                                                                             ? Integer.MAX_VALUE
@@ -97,15 +103,17 @@ class Processor {
                                 }
                             } else {
                                 Log.infov(
-                                        "available:\n{2}",
+                                        "\nlatest:\t\t{0}\nrelease:\t{1}\navailable:\n{2}",
+                                        entry.getValue().versioning().latest(),
+                                        entry.getValue().versioning().release(),
                                         String.join(
                                                 "\n",
-                                                entry.getValue().versions().stream()
+                                                entry.getValue().versioning().versions().stream()
                                                         .limit(
                                                                 count < 0
                                                                         ? Integer.MAX_VALUE
                                                                         : count)
-                                                        .map(v -> "\t" + v)
+                                                        .map(v -> "\t\t" + v)
                                                         .toList()));
                             }
                         });
@@ -134,9 +142,9 @@ class Processor {
                 String.format(
                         "%s/%s/%s/maven-metadata.xml",
                         repoRoot, gav.groupId().replaceAll("\\.", "/"), gav.artifactId());
-        // TODO do this without opening the URL stream twice
         Log.debugv("Opening {0} ...", url);
         if (Log.isDebugEnabled()) {
+            // TODO do this without opening the URL stream twice
             try (var stream = new BufferedInputStream(new URL(url).openStream())) {
                 Log.debug(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
             }
@@ -146,30 +154,17 @@ class Processor {
         if (exactMatch) {
             var versionMatch = versioning.contains(gav.version());
             if (versionMatch.isPresent()) {
-                results.put(gav, new ProcessResult(true, List.of(gav)));
-            } else {
                 results.put(
                         gav,
                         new ProcessResult(
-                                false,
-                                versioning.versions().stream()
-                                        .map(
-                                                v ->
-                                                        new GroupArtifactVersion(
-                                                                gav.groupId(), gav.artifactId(), v))
-                                        .toList()));
+                                true,
+                                new MavenVersioning(
+                                        gav.toString(), gav.toString(), List.of(gav.toString()))));
+            } else {
+                results.put(gav, new ProcessResult(false, versioning));
             }
         } else {
-            results.put(
-                    gav,
-                    new ProcessResult(
-                            !versioning.versions().isEmpty(),
-                            versioning.versions().stream()
-                                    .map(
-                                            v ->
-                                                    new GroupArtifactVersion(
-                                                            gav.groupId(), gav.artifactId(), v))
-                                    .toList()));
+            results.put(gav, new ProcessResult(!versioning.versions().isEmpty(), versioning));
         }
     }
 }

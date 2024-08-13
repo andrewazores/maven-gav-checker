@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.model;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import java.util.Optional;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.github.andrewazores.util.XmlParser;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
