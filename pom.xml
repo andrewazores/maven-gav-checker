@@ -16,6 +16,7 @@
   <compiler-plugin.version>3.13.0</compiler-plugin.version>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  <jpackage.maven-plugin.version>0.1.5</jpackage.maven-plugin.version>
 
   <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
   <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
@@ -55,6 +56,16 @@
 </dependencies>
 
 <build>
+  <pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>com.github.akman</groupId>
+        <artifactId>jpackage-maven-plugin</artifactId>
+        <version>${jpackage.maven-plugin.version}</version>
+      </plugin>
+    </plugins>
+  </pluginManagement>
+
   <plugins>
     <plugin>
       <groupId>${quarkus.platform.group-id}</groupId>
@@ -211,6 +222,39 @@
       <skipITs>false</skipITs>
       <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
     </properties>
+  </profile>
+  <profile>
+    <id>jpackage</id>
+    <activation>
+      <property>
+        <name>jpackage</name>
+      </property>
+    </activation>
+    <properties>
+      <skipITs>false</skipITs>
+      <quarkus.package.jar.type>fast-jar</quarkus.package.jar.type>
+    </properties>
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>com.github.akman</groupId>
+          <artifactId>jpackage-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>jpackage</goal>
+              </goals>
+              <configuration>
+                <input>${project.build.directory}</input><!-- FIXME copy the runner JAR into a subdirectory -->
+                <mainjar>${project.build.finalName}.jar</mainjar>
+                <mainclass>com.github.andrewazores.Main</mainclass>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
   </profile>
 </profiles>
 
