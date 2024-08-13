@@ -43,10 +43,10 @@ class GitHubRepositoryIntegration implements SourceIntegration {
 
     @Inject CliSupport cli;
 
-    @ConfigProperty(name = "maven-gav-checker.integration.github-repository.transitive-deps")
+    @ConfigProperty(name = "maven-gav-checker.transitive-deps")
     boolean enableTransitiveDeps;
 
-    @ConfigProperty(name = "maven-gav-checker.integration.github-repository.include-scope")
+    @ConfigProperty(name = "maven-gav-checker.include-scope")
     String includeScope;
 
     @Override
