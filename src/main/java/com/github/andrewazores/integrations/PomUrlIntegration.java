@@ -20,8 +20,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import com.github.andrewazores.model.GroupArtifactVersion;
 import com.github.andrewazores.scripting.CliSupport;
@@ -31,22 +31,9 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
-class PomUrlIntegration implements SourceIntegration {
-    private static final Pattern DEP_PATTERN =
-            Pattern.compile(
-                    "^[\\s]*(?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+):(?<packaging>[a-z0-9._-]+):(?<version>[a-z0-9._-]+).*",
-                    Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+class PomUrlIntegration extends AbstractPomFileIntegration {
 
     @Inject CliSupport cli;
-
-    @ConfigProperty(name = "maven-gav-checker.transitive-deps")
-    boolean enableTransitiveDeps;
-
-    @ConfigProperty(name = "maven-gav-checker.include-scope")
-    String includeScope;
-
-    @ConfigProperty(name = "maven-gav-checker.include-parent-pom")
-    boolean includeParentPom;
 
     @ConfigProperty(name = "maven-gav-checker.pom-url.supported-protocols")
     List<String> supportedProtocols;
@@ -59,10 +46,13 @@ class PomUrlIntegration implements SourceIntegration {
     @Override
     public List<GroupArtifactVersion> apply(URL url) throws IOException, InterruptedException {
         Log.debugv("Processing XML URL: {0}", url);
+
+        if ("file".equals(url.getProtocol())) {
+            return process(Path.of(url.getPath()));
+        }
+
         var workDir = Files.createTempDirectory(getClass().getSimpleName());
         var pom = workDir.resolve("pom.xml");
-        var depsFile = workDir.resolve("deps.txt");
-
         try (BufferedInputStream in = new BufferedInputStream(url.openStream());
                 FileOutputStream fileOutputStream = new FileOutputStream(pom.toFile())) {
             var dataBuffer = new byte[8 * 1024];
@@ -71,39 +61,9 @@ class PomUrlIntegration implements SourceIntegration {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
             }
 
-            if (Log.isDebugEnabled()) {
-                Log.debug(Files.readString(pom));
-            }
-
-            cli.script(
-                            "mvn",
-                            "-B",
-                            "-q",
-                            "-Dsilent",
-                            String.format("-DincludeScope=%s", includeScope),
-                            String.format("-DexcludeTransitive=%b", !enableTransitiveDeps),
-                            String.format("-DincludeParents=%b", includeParentPom),
-                            "-Dmdep.outputScope=false",
-                            String.format("-DoutputFile=%s", depsFile.toAbsolutePath().toString()),
-                            String.format("--file=%s", pom.toAbsolutePath().toString()),
-                            "dependency:list")
-                    .assertOk();
-            return Files.readAllLines(depsFile).stream()
-                    .peek(l -> Log.tracev("dependency: {0}", l))
-                    .filter(s -> DEP_PATTERN.matcher(s).matches())
-                    .map(
-                            s -> {
-                                var m2 = DEP_PATTERN.matcher(s);
-                                if (!m2.matches()) throw new IllegalStateException();
-                                return new GroupArtifactVersion(
-                                        m2.group("group"),
-                                        m2.group("artifact"),
-                                        m2.group("version"));
-                            })
-                    .toList();
+            return process(pom);
         } finally {
             Files.deleteIfExists(pom);
-            Files.deleteIfExists(depsFile);
         }
     }
 }
