@@ -149,9 +149,7 @@ class Processor {
                                             new ProcessResult(
                                                     true,
                                                     new MavenVersioning(
-                                                            match,
-                                                            match,
-                                                            List.of(match)))),
+                                                            match, match, List.of(match)))),
                             () -> results.put(gav, new ProcessResult(false, versioning)));
         } else {
             results.put(gav, new ProcessResult(!versioning.versions().isEmpty(), versioning));
