@@ -16,7 +16,9 @@
 package com.github.andrewazores.scripting;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import io.quarkus.logging.Log;
@@ -44,6 +46,12 @@ public class CliSupport {
     }
 
     public static record ScriptResult(int statusCode, List<String> out, List<String> err) {
+        public ScriptResult(int statusCode, List<String> out, List<String> err) {
+            this.statusCode = statusCode;
+            this.out = Collections.unmodifiableList(new ArrayList<>(out));
+            this.err = Collections.unmodifiableList(new ArrayList<>(err));
+        }
+
         public ScriptResult assertOk() {
             if (!ok()) {
                 throw new IllegalStateException(
