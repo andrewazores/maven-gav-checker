@@ -83,7 +83,7 @@ abstract class AbstractPomFileIntegration implements SourceIntegration {
                     .map(
                             s -> {
                                 var m2 = DEP_PATTERN.matcher(s);
-                                if (!m2.matches()) throw new IllegalStateException();
+                                assert m2.matches();
                                 return new GroupArtifactVersion(
                                         m2.group("group"),
                                         m2.group("artifact"),

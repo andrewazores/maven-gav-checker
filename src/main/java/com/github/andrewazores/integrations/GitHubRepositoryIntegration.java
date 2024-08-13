@@ -16,6 +16,7 @@
 package com.github.andrewazores.integrations;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -46,7 +47,7 @@ class GitHubRepositoryIntegration extends PomUrlIntegration {
     public List<GroupArtifactVersion> apply(URL url) throws IOException, InterruptedException {
         Log.debugv("Processing GitHub repository: {0}", url);
         var m = GH_REPO_PATTERN.matcher(url.toString());
-        if (!m.matches()) throw new IllegalStateException();
+        assert m.matches();
         var owner = m.group("owner");
         var repo = m.group("repo");
         var repoId = String.format("%s/%s", owner, repo);
@@ -73,8 +74,7 @@ class GitHubRepositoryIntegration extends PomUrlIntegration {
             return new URL(
                     String.format(
                             "https://raw.githubusercontent.com/%s/%s/pom.xml", repo, checkoutRef));
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
     }

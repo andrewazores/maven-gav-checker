@@ -126,26 +126,20 @@ public class Main implements Callable<Integer> {
                 gav -> {
                     try {
                         var url = new URL(gav);
-                        boolean matched = false;
-                        for (var integration : sourceIntegrations) {
-                            boolean applies = integration.test(url);
-                            matched |= applies;
-                            Log.debugv(
-                                    "integration {0} applies to {1} -> {2}",
-                                    integration.getClass().getName(), url, applies);
-                            if (applies) {
-                                dependencies.addAll(integration.apply(url));
-                                Log.trace(gavs.toString());
-                            }
-                        }
-                        if (!matched) {
-                            throw new RuntimeException(
-                                    "No matching integrations found for provided URL");
-                        }
+                        dependencies.addAll(
+                                sourceIntegrations.stream()
+                                        .filter(integration -> integration.test(url))
+                                        .findFirst()
+                                        .orElseThrow(
+                                                () ->
+                                                        new IllegalStateException(
+                                                                "No matching integrations found for"
+                                                                        + " provided URL"))
+                                        .apply(url));
                     } catch (IOException | InterruptedException mue) {
                         var matcher = GAV_PATTERN.matcher(gav);
                         if (!matcher.matches()) {
-                            throw new RuntimeException(
+                            throw new IllegalArgumentException(
                                     String.format("GAV %s was not parseable", gav));
                         } else {
                             var groupId = matcher.group("group");
@@ -156,6 +150,7 @@ public class Main implements Callable<Integer> {
                         }
                     }
                 });
+        assert !dependencies.isEmpty();
         Log.tracev("Processing GAVs: {0}", dependencies);
         return processor.execute(dependencies, repoRoot, count).get();
     }

@@ -46,7 +46,7 @@ public class CliSupport {
     public static record ScriptResult(int statusCode, List<String> out, List<String> err) {
         public ScriptResult assertOk() {
             if (!ok()) {
-                throw new RuntimeException(
+                throw new IllegalStateException(
                         String.format(
                                 "%nstdout:%n%s%nstderr:%n%s",
                                 String.join("\n", out()), String.join("\n", err())));
