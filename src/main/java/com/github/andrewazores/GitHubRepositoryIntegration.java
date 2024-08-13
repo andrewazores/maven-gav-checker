@@ -76,10 +76,11 @@ class GitHubRepositoryIntegration implements SourceIntegration {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
             }
 
-            Log.debug(Files.readString(pom));
+            if (Log.isDebugEnabled()) {
+                Log.debug(Files.readString(pom));
+            }
 
-            var proc =
-                    cli.script(
+            cli.script(
                             "mvn",
                             "-B",
                             "-q",
@@ -88,11 +89,10 @@ class GitHubRepositoryIntegration implements SourceIntegration {
                             String.format("-DexcludeTransitive=%b", !enableTransitiveDeps),
                             "-DincludeParents",
                             "-Dmdep.outputScope=false",
-                            "-DoutputFile=" + depsFile.toAbsolutePath().toString(),
-                            "-f",
-                            pom.toAbsolutePath().toString(),
-                            "dependency:list");
-            proc.assertOk();
+                            String.format("-DoutputFile=%s", depsFile.toAbsolutePath().toString()),
+                            String.format("--file=%s", pom.toAbsolutePath().toString()),
+                            "dependency:list")
+                    .assertOk();
             return Files.readAllLines(depsFile).stream()
                     .peek(l -> Log.tracev("dependency: {0}", l))
                     .filter(s -> DEP_PATTERN.matcher(s).matches())
@@ -115,15 +115,13 @@ class GitHubRepositoryIntegration implements SourceIntegration {
     private String getDefaultBranchRef(String repo) throws IOException, InterruptedException {
         var proc =
                 cli.script(
-                        "gh",
-                        "repo",
-                        "view",
-                        "--json",
-                        "defaultBranchRef",
-                        "--jq",
-                        ".defaultBranchRef.name",
-                        repo);
-        proc.assertOk();
+                                "gh",
+                                "repo",
+                                "view",
+                                "--json=defaultBranchRef",
+                                "--jq=.defaultBranchRef.name",
+                                repo)
+                        .assertOk();
         return proc.out().get(0);
     }
 
