@@ -53,15 +53,18 @@ public class Main implements Callable<Integer> {
                     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
     @Parameters(
-            index = "0",
+            index = "0..*",
             description =
-                    "The Maven dependency GroupId:ArtifactId[:Version] (GAV), ex."
-                        + " org.slf4j:slf4j-api:2.0.12 or info.picocli:picocli . If no version is"
-                        + " specified (version listing mode) then all available versions are"
+                    "List of Maven dependencies in the form of GroupId:ArtifactId[:Version] (GAVs),"
+                        + " ex. org.slf4j:slf4j-api:2.0.12 or info.picocli:picocli . If no version"
+                        + " is specified (version listing mode) then all available versions are"
                         + " printed, otherwise the existence of the specified version is checked."
                         + " If the GitHub 'gh' client is installed, this can also be a GitHub Pull"
-                        + " Request URL and the PR title will be used to infer the GAV.")
-    private String gav;
+                        + " Request URL and the PR title will be used to infer the GAV. If 'gh' and"
+                        + " 'mvn' are available then this may also be a GitHub repository URL, in"
+                        + " which case all dependencies of the 'pom.xml' of the repository's"
+                        + " default branch will be checked.")
+    private List<String> gavs;
 
     @Option(
             names = {"-r", "--repository"},
@@ -118,37 +121,43 @@ public class Main implements Callable<Integer> {
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
-        Collection<GroupArtifactVersion> gavs = new CopyOnWriteArrayList<>();
-        try {
-            var url = new URL(gav);
-            boolean matched = false;
-            for (var integration : sourceIntegrations) {
-                boolean applies = integration.test(url);
-                matched |= applies;
-                Log.debugv(
-                        "integration {0} applies to {1} -> {2}",
-                        integration.getClass().getName(), url, applies);
-                if (applies) {
-                    gavs.addAll(integration.apply(url));
-                    Log.trace(gavs.toString());
-                }
-            }
-            if (!matched) {
-                throw new RuntimeException("No matching integrations found for provided URL");
-            }
-        } catch (IOException | InterruptedException mue) {
-            var matcher = GAV_PATTERN.matcher(gav);
-            if (!matcher.matches()) {
-                throw new RuntimeException(String.format("GAV %s was not parseable", gav));
-            } else {
-                var groupId = matcher.group("group");
-                var artifactId = matcher.group("artifact");
-                var version = matcher.group("version");
-                gavs.add(new GroupArtifactVersion(groupId, artifactId, version));
-            }
-        }
-        Log.tracev("Processing GAVs: {0}", gavs);
-        return processor.execute(gavs, repoRoot, count).get();
+        Collection<GroupArtifactVersion> dependencies = new CopyOnWriteArrayList<>();
+        gavs.forEach(
+                gav -> {
+                    try {
+                        var url = new URL(gav);
+                        boolean matched = false;
+                        for (var integration : sourceIntegrations) {
+                            boolean applies = integration.test(url);
+                            matched |= applies;
+                            Log.debugv(
+                                    "integration {0} applies to {1} -> {2}",
+                                    integration.getClass().getName(), url, applies);
+                            if (applies) {
+                                dependencies.addAll(integration.apply(url));
+                                Log.trace(gavs.toString());
+                            }
+                        }
+                        if (!matched) {
+                            throw new RuntimeException(
+                                    "No matching integrations found for provided URL");
+                        }
+                    } catch (IOException | InterruptedException mue) {
+                        var matcher = GAV_PATTERN.matcher(gav);
+                        if (!matcher.matches()) {
+                            throw new RuntimeException(
+                                    String.format("GAV %s was not parseable", gav));
+                        } else {
+                            var groupId = matcher.group("group");
+                            var artifactId = matcher.group("artifact");
+                            var version = matcher.group("version");
+                            dependencies.add(
+                                    new GroupArtifactVersion(groupId, artifactId, version));
+                        }
+                    }
+                });
+        Log.tracev("Processing GAVs: {0}", dependencies);
+        return processor.execute(dependencies, repoRoot, count).get();
     }
 
     private void disableTlsValidation() throws NoSuchAlgorithmException, KeyManagementException {
