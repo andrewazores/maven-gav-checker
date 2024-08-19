@@ -91,7 +91,7 @@ public class Main implements Callable<Integer> {
 
     @Option(
             names = {"-o", "--output-format"},
-            description = "The output format to print. Defaults to 'human'.",
+            description = "The output format to print: human, json, or xml. Defaults to 'human'.",
             defaultValue = "human")
     private String outputFormat;
 
