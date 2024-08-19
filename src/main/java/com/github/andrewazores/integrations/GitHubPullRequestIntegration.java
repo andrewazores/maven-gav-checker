@@ -17,7 +17,9 @@ package com.github.andrewazores.integrations;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import com.github.andrewazores.model.GroupArtifactVersion;
@@ -33,6 +35,10 @@ class GitHubPullRequestIntegration implements SourceIntegration {
                     "^build\\(deps\\): bump (?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+) from"
                             + " (?:[a-z0-9._-]+) to (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
+    private static final Pattern GH_PR_BODY_PATTERN =
+            Pattern.compile(
+                    "^Updates `(?<group>[^:]+):(?<artifact>.+)` from (?<from>.+) to (?<to>.+)$",
+                    Pattern.MULTILINE);
 
     @Inject CliSupport cli;
 
@@ -41,7 +47,7 @@ class GitHubPullRequestIntegration implements SourceIntegration {
         try {
             return ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))
                     && "github.com".equals(url.getHost())
-                    && url.getPath().matches("/[\\w-_\\.]+/[\\w-_\\.]+/pull/[\\d]+/?");
+                    && url.getPath().matches("/[\\w._-]+/[\\w._-]+/pull/[\\d]+/?");
         } catch (Exception e) {
             Log.trace(e);
             return false;
@@ -50,6 +56,27 @@ class GitHubPullRequestIntegration implements SourceIntegration {
 
     @Override
     public List<GroupArtifactVersion> apply(URL url) throws IOException, InterruptedException {
+        return matchesTitle(url)
+                .or(
+                        () -> {
+                            try {
+                                return matchesBody(url);
+                            } catch (IOException | InterruptedException e) {
+                                Log.error(e);
+                                return Optional.empty();
+                            }
+                        })
+                .orElseThrow(
+                        () ->
+                                new RuntimeException(
+                                        String.format(
+                                                "GitHub PR URL \"%s\" was not understandable. Is"
+                                                        + " this a Dependabot Pull Request?",
+                                                url)));
+    }
+
+    private Optional<List<GroupArtifactVersion>> matchesTitle(URL url)
+            throws IOException, InterruptedException {
         cli.testCommand("gh");
         var proc =
                 cli.script("gh", "pr", "view", url.toString(), "--json", "title", "--jq", ".title");
@@ -57,13 +84,13 @@ class GitHubPullRequestIntegration implements SourceIntegration {
         proc.assertOk();
         var matcher = GH_PR_TITLE_PATTERN.matcher(proc.out().get(0));
         if (!matcher.matches()) {
-            throw new RuntimeException(
-                    String.format(
-                            "GitHub PR URL \"%s\" was not understandable. Got title: \"%s\". Is"
-                                + " this a Dependabot Pull Request? Does the title contain a single"
-                                + " GroupId:ArtifactId or a Maven property for upgrading a"
-                                + " dependency group?",
-                            url, proc.out().get(0)));
+            Log.debugv(
+                    "GitHub PR URL {0} was not understandable. Got title: {1}. Is"
+                            + " this a Dependabot Pull Request? Does the title contain a single"
+                            + " GroupId:ArtifactId or a Maven property for upgrading a"
+                            + " dependency group?",
+                    url, proc.out().get(0));
+            return Optional.empty();
         }
         var group = matcher.group("group");
         var artifact = matcher.group("artifact");
@@ -71,6 +98,39 @@ class GitHubPullRequestIntegration implements SourceIntegration {
         Log.debugv(
                 "Interpreted GitHub PR title \"{0}\" as request for {1}:{2}:{3}",
                 proc.out().get(0), group, artifact, version);
-        return List.of(new GroupArtifactVersion(group, artifact, version));
+        return Optional.of(List.of(new GroupArtifactVersion(group, artifact, version)));
+    }
+
+    private Optional<List<GroupArtifactVersion>> matchesBody(URL url)
+            throws IOException, InterruptedException {
+        cli.testCommand("gh");
+        var proc =
+                cli.script("gh", "pr", "view", url.toString(), "--json", "body", "--jq", ".body");
+        var body = String.join("\n", proc.out());
+        Log.trace(body);
+        proc.assertOk();
+        var matcher = GH_PR_BODY_PATTERN.matcher(body);
+        var result = new ArrayList<GroupArtifactVersion>();
+        boolean anyFound = false;
+        while (true) {
+            boolean found = matcher.find();
+            anyFound |= found;
+            if (!found) break;
+            var group = matcher.group("group");
+            var artifact = matcher.group("artifact");
+            var version = matcher.group("to");
+            var gav = new GroupArtifactVersion(group, artifact, version);
+            Log.tracev("Found {0}", gav);
+            result.add(gav);
+        }
+        if (!anyFound) {
+            Log.debugv(
+                    "GitHub PR URL {0} was not understandable. Got body: {1}. Is this a Dependabot"
+                            + " Pull Request? Does the body contain a list of 'Updates"
+                            + " `groupId:artifactId` from $from to $version' strings?",
+                    url, body);
+            return Optional.empty();
+        }
+        return Optional.of(result);
     }
 }
