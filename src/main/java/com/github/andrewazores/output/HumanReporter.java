@@ -50,11 +50,17 @@ class HumanReporter implements OutputReporter {
                                             repoRoot);
                                 } else {
                                     Log.errorv(
-                                            "{0}:{1}:{2} is NOT available in {3}.\navailable:\n{4}",
+                                            "{0}:{1}:{2} is NOT available in {3}.\n"
+                                                    + "latest:\t\t{4}\n"
+                                                    + "release:\t{5}\n"
+                                                    + "available:\n"
+                                                    + "{6}",
                                             gav.groupId(),
                                             gav.artifactId(),
                                             gav.version(),
                                             repoRoot,
+                                            entry.getValue().versioning().latest(),
+                                            entry.getValue().versioning().release(),
                                             String.join(
                                                     "\n",
                                                     entry
@@ -62,7 +68,7 @@ class HumanReporter implements OutputReporter {
                                                             .versioning()
                                                             .versions()
                                                             .stream()
-                                                            .map(v -> "\t" + v)
+                                                            .map(v -> "\t\t" + v)
                                                             .toList()));
                                 }
                             } else {
