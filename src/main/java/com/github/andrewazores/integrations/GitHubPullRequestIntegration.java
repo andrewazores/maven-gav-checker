@@ -41,7 +41,7 @@ class GitHubPullRequestIntegration implements SourceIntegration {
         try {
             return ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))
                     && "github.com".equals(url.getHost())
-                    && url.getPath().matches("^/(?:[\\w]+)/(?:[\\w]+)/pull/(?:[\\d]+)$");
+                    && url.getPath().matches("/[\\w-_\\.]+/[\\w-_\\.]+/pull/[\\d]+/?");
         } catch (Exception e) {
             Log.trace(e);
             return false;
