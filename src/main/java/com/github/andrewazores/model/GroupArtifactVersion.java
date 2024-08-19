@@ -15,6 +15,9 @@
  */
 package com.github.andrewazores.model;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public record GroupArtifactVersion(String groupId, String artifactId, String version) {
     @Override
     public String toString() {

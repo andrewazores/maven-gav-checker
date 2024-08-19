@@ -16,5 +16,7 @@
 package com.github.andrewazores;
 
 import com.github.andrewazores.model.MavenVersioning;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
+@RegisterForReflection
 public record ProcessResult(boolean exactMatch, boolean available, MavenVersioning versioning) {}

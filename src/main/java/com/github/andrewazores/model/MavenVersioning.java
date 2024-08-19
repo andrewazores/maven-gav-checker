@@ -29,9 +29,11 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import com.github.andrewazores.util.XmlParser;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+@RegisterForReflection
 public record MavenVersioning(String latest, String release, List<String> versions) {
     public MavenVersioning(String latest, String release, List<String> versions) {
         this.latest = latest;
