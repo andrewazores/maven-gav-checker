@@ -61,7 +61,7 @@ class Processor {
 
         latch.await();
 
-        reporter.accept(results, repoRoot, count);
+        reporter.accept(results, repoRoot);
 
         return (int)
                 results.values().stream()
@@ -92,7 +92,7 @@ class Processor {
                 String.format(
                         "%s/%s/%s/maven-metadata.xml",
                         repoRoot, gav.groupId().replaceAll("\\.", "/"), gav.artifactId());
-        var versioning = MavenVersioning.from(url);
+        var versioning = MavenVersioning.from(url).limit(count);
 
         if (exactMatch) {
             versioning

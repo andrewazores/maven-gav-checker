@@ -31,8 +31,7 @@ class HumanReporter implements OutputReporter {
     }
 
     @Override
-    public void accept(
-            Map<GroupArtifactVersion, ProcessResult> results, String repoRoot, int count) {
+    public void accept(Map<GroupArtifactVersion, ProcessResult> results, String repoRoot) {
         results.entrySet()
                 .forEach(
                         entry -> {
@@ -63,10 +62,6 @@ class HumanReporter implements OutputReporter {
                                                             .versioning()
                                                             .versions()
                                                             .stream()
-                                                            .limit(
-                                                                    count < 0
-                                                                            ? Integer.MAX_VALUE
-                                                                            : count)
                                                             .map(v -> "\t" + v)
                                                             .toList()));
                                 }
@@ -78,10 +73,6 @@ class HumanReporter implements OutputReporter {
                                         String.join(
                                                 "\n",
                                                 entry.getValue().versioning().versions().stream()
-                                                        .limit(
-                                                                count < 0
-                                                                        ? Integer.MAX_VALUE
-                                                                        : count)
                                                         .map(v -> "\t\t" + v)
                                                         .toList()));
                             }

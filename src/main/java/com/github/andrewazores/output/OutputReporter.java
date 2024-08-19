@@ -23,5 +23,5 @@ import com.github.andrewazores.model.GroupArtifactVersion;
 public interface OutputReporter {
     String formatSpecifier();
 
-    void accept(Map<GroupArtifactVersion, ProcessResult> results, String repoRoot, int count);
+    void accept(Map<GroupArtifactVersion, ProcessResult> results, String repoRoot);
 }

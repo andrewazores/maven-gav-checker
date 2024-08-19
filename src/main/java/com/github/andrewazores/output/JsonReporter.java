@@ -36,10 +36,12 @@ class JsonReporter implements OutputReporter {
     }
 
     @Override
-    public void accept(
-            Map<GroupArtifactVersion, ProcessResult> results, String repoRoot, int count) {
+    public void accept(Map<GroupArtifactVersion, ProcessResult> results, String repoRoot) {
         try {
-            Log.info(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(results));
+            Log.info(
+                    mapper.writerWithDefaultPrettyPrinter()
+                            .writeValueAsString(
+                                    Map.of("repository", repoRoot, "results", results)));
         } catch (JsonProcessingException jpe) {
             throw new RuntimeException(jpe);
         }

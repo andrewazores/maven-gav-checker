@@ -47,6 +47,13 @@ public record MavenVersioning(String latest, String release, List<String> versio
         return versions.stream().filter(v -> versionCompare(gav.version(), v)).findFirst();
     }
 
+    public MavenVersioning limit(int count) {
+        if (count <= 0) {
+            return this;
+        }
+        return new MavenVersioning(latest, release, versions.subList(0, count));
+    }
+
     public static MavenVersioning from(String url)
             throws IOException, ParserConfigurationException, SAXException {
         var factory = DocumentBuilderFactory.newDefaultInstance();
