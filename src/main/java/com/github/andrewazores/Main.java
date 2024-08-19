@@ -33,6 +33,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.github.andrewazores.integrations.SourceIntegration;
 import com.github.andrewazores.model.GroupArtifactVersion;
+import com.github.andrewazores.output.OutputReporter;
 import io.quarkus.arc.All;
 import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
@@ -89,6 +90,12 @@ public class Main implements Callable<Integer> {
     private int count;
 
     @Option(
+            names = {"-o", "--output-format"},
+            description = "The output format to print. Defaults to 'human'.",
+            defaultValue = "human")
+    private String outputFormat;
+
+    @Option(
             names = {"-k", "--insecure"},
             description =
                     "Disable TLS validation on the remote Maven repository. This can also be set"
@@ -103,6 +110,7 @@ public class Main implements Callable<Integer> {
     boolean configInsecure;
 
     @Inject @All List<SourceIntegration> sourceIntegrations;
+    @Inject @All List<OutputReporter> reporters;
     @Inject Processor processor;
 
     public static void main(String... args) {
@@ -115,6 +123,16 @@ public class Main implements Callable<Integer> {
         if (gavs == null || gavs.isEmpty()) {
             throw new IllegalArgumentException("No GAV arguments");
         }
+        var reporter =
+                reporters.stream()
+                        .filter(r -> r.formatSpecifier().equals(outputFormat))
+                        .findFirst()
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                String.format(
+                                                        "Unknown output format \"%s\"",
+                                                        outputFormat)));
         if (insecure || configInsecure) {
             disableTlsValidation();
         }
@@ -155,7 +173,7 @@ public class Main implements Callable<Integer> {
                 });
         assert !dependencies.isEmpty();
         Log.tracev("Processing GAVs: {0}", dependencies);
-        return processor.execute(dependencies, repoRoot, count).get();
+        return processor.execute(reporter, dependencies, repoRoot, count);
     }
 
     private void disableTlsValidation() throws NoSuchAlgorithmException, KeyManagementException {

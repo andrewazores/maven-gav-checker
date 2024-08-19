@@ -22,12 +22,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import com.github.andrewazores.model.GroupArtifactVersion;
 import com.github.andrewazores.model.MavenVersioning;
+import com.github.andrewazores.output.OutputReporter;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.xml.sax.SAXException;
@@ -35,9 +35,12 @@ import org.xml.sax.SAXException;
 @ApplicationScoped
 class Processor {
 
-    public AtomicInteger execute(Collection<GroupArtifactVersion> gavs, String repoRoot, int count)
+    public int execute(
+            OutputReporter reporter,
+            Collection<GroupArtifactVersion> gavs,
+            String repoRoot,
+            int count)
             throws InterruptedException {
-        final var out = new AtomicInteger();
         final var latch = new CountDownLatch(gavs.size());
         final Map<GroupArtifactVersion, ProcessResult> results = new ConcurrentHashMap<>();
 
@@ -58,61 +61,13 @@ class Processor {
 
         latch.await();
 
-        results.entrySet()
-                .forEach(
-                        entry -> {
-                            var gav = entry.getKey();
-                            boolean exactMatch =
-                                    !(entry.getKey().version() == null
-                                            || "null".equals(entry.getKey().version()));
-                            if (exactMatch) {
-                                if (entry.getValue().available()) {
-                                    Log.infov(
-                                            "{0}:{1}:{2} is available as {3} in {4}",
-                                            gav.groupId(),
-                                            gav.artifactId(),
-                                            gav.version(),
-                                            entry.getValue().versioning().versions().get(0),
-                                            repoRoot);
-                                } else {
-                                    Log.errorv(
-                                            "{0}:{1}:{2} is NOT available in {3}.\navailable:\n{4}",
-                                            gav.groupId(),
-                                            gav.artifactId(),
-                                            gav.version(),
-                                            repoRoot,
-                                            String.join(
-                                                    "\n",
-                                                    entry
-                                                            .getValue()
-                                                            .versioning()
-                                                            .versions()
-                                                            .stream()
-                                                            .limit(
-                                                                    count < 0
-                                                                            ? Integer.MAX_VALUE
-                                                                            : count)
-                                                            .map(v -> "\t" + v)
-                                                            .toList()));
-                                    out.incrementAndGet();
-                                }
-                            } else {
-                                Log.infov(
-                                        "\nlatest:\t\t{0}\nrelease:\t{1}\navailable:\n{2}",
-                                        entry.getValue().versioning().latest(),
-                                        entry.getValue().versioning().release(),
-                                        String.join(
-                                                "\n",
-                                                entry.getValue().versioning().versions().stream()
-                                                        .limit(
-                                                                count < 0
-                                                                        ? Integer.MAX_VALUE
-                                                                        : count)
-                                                        .map(v -> "\t\t" + v)
-                                                        .toList()));
-                            }
-                        });
-        return out;
+        reporter.accept(results, repoRoot, count);
+
+        return (int)
+                results.values().stream()
+                        .filter(r -> r.exactMatch() && !r.available())
+                        .limit(Integer.MAX_VALUE)
+                        .count();
     }
 
     private void process(
@@ -147,12 +102,17 @@ class Processor {
                                     results.put(
                                             gav,
                                             new ProcessResult(
+                                                    exactMatch,
                                                     true,
                                                     new MavenVersioning(
                                                             match, match, List.of(match)))),
-                            () -> results.put(gav, new ProcessResult(false, versioning)));
+                            () ->
+                                    results.put(
+                                            gav, new ProcessResult(exactMatch, false, versioning)));
         } else {
-            results.put(gav, new ProcessResult(!versioning.versions().isEmpty(), versioning));
+            results.put(
+                    gav,
+                    new ProcessResult(exactMatch, !versioning.versions().isEmpty(), versioning));
         }
     }
 }

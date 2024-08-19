@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores;
+package com.github.andrewazores.output;
 
-import com.github.andrewazores.model.MavenVersioning;
+import java.util.Map;
 
-public record ProcessResult(boolean exactMatch, boolean available, MavenVersioning versioning) {}
+import com.github.andrewazores.ProcessResult;
+import com.github.andrewazores.model.GroupArtifactVersion;
+
+public interface OutputReporter {
+    String formatSpecifier();
+
+    void accept(Map<GroupArtifactVersion, ProcessResult> results, String repoRoot, int count);
+}
