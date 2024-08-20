@@ -24,19 +24,11 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.github.andrewazores.model.GroupArtifactVersion;
-import com.github.andrewazores.scripting.CliSupport;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class PomUrlIntegration extends AbstractPomFileIntegration {
-
-    @Inject protected CliSupport cli;
-
-    @ConfigProperty(name = "maven-gav-checker.pom-url.supported-protocols")
-    protected List<String> supportedProtocols;
 
     @Override
     public boolean test(URL url) {
