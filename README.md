@@ -14,12 +14,13 @@ Given a dependency `groupId:artifactId:version` argument, the tool will print wh
 status. If the dependency is not available it will also list available versions.
 
 Given a GitHub Pull Request URL, the tool will attempt to use the [`gh`](https://github.com/cli/cli) tool to get the Pull Request title. If this meets the expected Dependabot
-title format, the tool will extract the GAV from the title and act as if that GAV were specified directly.
+title format, the tool will extract the GAV from the title and act as if that GAV were specified directly. Otherwise, if the Pull Request body meets the expected Dependabot format
+for multi-dependency (Maven property) version upgrades, then each of those GAVs will be extracted.
 
 Given a GitHub repository URL, the tool will attempt to use `gh` to get the repository's `pom.xml` from its default branch. Then it will use `mvn` to resolve all of the
 project dependencies, and report on this list of GAVs.
 
-Given an HTTP(S) or `file:` URL ending with `.xml`, the tool will attempt to download or open the file at the given path, expecting it to be a `pom.xml`. Then it will use`mvn` to resolve
+Given an HTTP(S) or `file:` URL ending with `.xml`, the tool will attempt to download or open the file at the given path, expecting it to be a `pom.xml`. Then it will use `mvn` to resolve
 the project depenendencies and report on this list of GAVs.
 
 ## Building
