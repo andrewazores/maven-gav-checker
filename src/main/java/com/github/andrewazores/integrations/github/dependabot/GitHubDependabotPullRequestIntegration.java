@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.andrewazores.integrations;
+package com.github.andrewazores.integrations.github.dependabot;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.github.andrewazores.integrations.SourceIntegration;
 import com.github.andrewazores.model.GroupArtifactVersion;
 import com.github.andrewazores.scripting.CliSupport;
 import io.quarkus.logging.Log;
@@ -29,7 +30,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-class GitHubPullRequestIntegration implements SourceIntegration {
+class GitHubDependabotPullRequestIntegration implements SourceIntegration {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
                     "^build\\(deps\\): bump (?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+) from"
@@ -40,7 +41,7 @@ class GitHubPullRequestIntegration implements SourceIntegration {
                     "^Updates `(?<group>[^:]+):(?<artifact>.+)` from (?<from>.+) to (?<to>.+)$",
                     Pattern.MULTILINE);
 
-    @Inject CliSupport cli;
+    @Inject protected CliSupport cli;
 
     @Override
     public boolean test(URL url) {

@@ -31,12 +31,12 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
-class PomUrlIntegration extends AbstractPomFileIntegration {
+public class PomUrlIntegration extends AbstractPomFileIntegration {
 
-    @Inject CliSupport cli;
+    @Inject protected CliSupport cli;
 
     @ConfigProperty(name = "maven-gav-checker.pom-url.supported-protocols")
-    List<String> supportedProtocols;
+    protected List<String> supportedProtocols;
 
     @Override
     public boolean test(URL url) {

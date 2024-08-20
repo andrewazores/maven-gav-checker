@@ -28,25 +28,25 @@ import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-abstract class AbstractPomFileIntegration implements SourceIntegration {
+public abstract class AbstractPomFileIntegration implements SourceIntegration {
     private static final Pattern DEP_PATTERN =
             Pattern.compile(
                     "^[\\s]*(?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+):(?<packaging>[a-z0-9._-]+):(?<version>[a-z0-9._-]+).*",
                     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
-    @Inject CliSupport cli;
+    @Inject protected CliSupport cli;
 
     @ConfigProperty(name = "maven-gav-checker.transitive-deps")
-    boolean enableTransitiveDeps;
+    protected boolean enableTransitiveDeps;
 
     @ConfigProperty(name = "maven-gav-checker.include-scope")
-    String includeScope;
+    protected String includeScope;
 
     @ConfigProperty(name = "maven-gav-checker.include-parent-pom")
-    boolean includeParentPom;
+    protected boolean includeParentPom;
 
     @ConfigProperty(name = "maven-gav-checker.pom-url.supported-protocols")
-    List<String> supportedProtocols;
+    protected List<String> supportedProtocols;
 
     @Override
     public boolean test(URL url) {
