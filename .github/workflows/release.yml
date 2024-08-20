@@ -27,4 +27,4 @@ jobs:
         artifactErrorsFailBuild: true
         generateReleaseNotes: true
         makeLatest: true
-        prerelease: true
+        prerelease: ${{ contains(github.ref_name, 'pre') }}
