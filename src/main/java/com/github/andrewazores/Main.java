@@ -78,7 +78,7 @@ public class Main implements Callable<Integer> {
             defaultValue = "https://repo.maven.apache.org/maven2/")
     private String repoRoot;
 
-    @ConfigProperty(name = "gav-checker.maven-repository.url")
+    @ConfigProperty(name = "maven-gav-checker.maven-repository.url")
     String configRepoRoot;
 
     @Option(
@@ -106,7 +106,7 @@ public class Main implements Callable<Integer> {
             defaultValue = "false")
     private boolean insecure;
 
-    @ConfigProperty(name = "gav-checker.maven-repository.skip-tls-validation")
+    @ConfigProperty(name = "maven-gav-checker.maven-repository.skip-tls-validation")
     boolean configInsecure;
 
     @Inject @All List<SourceIntegration> sourceIntegrations;
