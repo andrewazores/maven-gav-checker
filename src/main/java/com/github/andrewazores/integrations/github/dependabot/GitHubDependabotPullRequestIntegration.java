@@ -108,15 +108,13 @@ class GitHubDependabotPullRequestIntegration implements SourceIntegration {
         cli.testCommand("gh");
         var proc =
                 cli.script("gh", "pr", "view", url.toString(), "--json", "body", "--jq", ".body");
-        var body = String.join("\n", proc.out());
+        var body = String.join("\n", proc.out()).strip();
         Log.trace(body);
         proc.assertOk();
         var matcher = GH_PR_BODY_PATTERN.matcher(body);
         var result = new ArrayList<GroupArtifactVersion>();
-        boolean anyFound = false;
         while (true) {
             boolean found = matcher.find();
-            anyFound |= found;
             if (!found) break;
             var group = matcher.group("group");
             var artifact = matcher.group("artifact");
@@ -125,7 +123,7 @@ class GitHubDependabotPullRequestIntegration implements SourceIntegration {
             Log.tracev("Found {0}", gav);
             result.add(gav);
         }
-        if (!anyFound) {
+        if (result.isEmpty()) {
             Log.debugv(
                     "GitHub PR URL {0} was not understandable. Got body: {1}. Is this a Dependabot"
                             + " Pull Request? Does the body contain a list of 'Updates"
