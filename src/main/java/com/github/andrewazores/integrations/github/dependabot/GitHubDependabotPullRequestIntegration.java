@@ -33,8 +33,9 @@ import jakarta.inject.Inject;
 class GitHubDependabotPullRequestIntegration implements SourceIntegration {
     private static final Pattern GH_PR_TITLE_PATTERN =
             Pattern.compile(
-                    "^build\\(deps\\): bump (?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+) from"
-                            + " (?:[a-z0-9._-]+) to (?<version>[a-z0-9._-]+)$",
+                    "^build\\(deps(?:-dev)?\\): bump"
+                        + " (?<group>[a-z0-9._-]+):(?<artifact>[a-z0-9._-]+) from (?:[a-z0-9._-]+)"
+                        + " to (?<version>[a-z0-9._-]+)$",
                     Pattern.MULTILINE);
     private static final Pattern GH_PR_BODY_PATTERN =
             Pattern.compile(
