@@ -17,11 +17,13 @@ package com.github.andrewazores;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
@@ -106,6 +108,14 @@ public class Main implements Callable<Integer> {
             defaultValue = "false")
     private boolean insecure;
 
+    @Option(
+            names = {"-i", "--interactive"},
+            description =
+                    "Run an interactive session so that multiple GAVs can be checked sequentially"
+                            + " without re-invoking the tool.",
+            defaultValue = "false")
+    private boolean interactive;
+
     @ConfigProperty(name = "maven-gav-checker.maven-repository.skip-tls-validation")
     boolean configInsecure;
 
@@ -120,7 +130,7 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (gavs == null || gavs.isEmpty()) {
+        if (!interactive && (gavs == null || gavs.isEmpty())) {
             throw new IllegalArgumentException("No GAV arguments");
         }
         var reporter =
@@ -142,6 +152,30 @@ public class Main implements Callable<Integer> {
         if (repoRoot.endsWith("/")) {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
+        if (interactive) {
+            try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
+                if (count == -1) {
+                    count = 1;
+                }
+                System.out.print("? ");
+                while (scanner.hasNext()) {
+                    String tok = scanner.next();
+                    System.out.println("...");
+                    try {
+                        processor.execute(reporter, processGAVs(List.of(tok)), repoRoot, count);
+                    } catch (Exception e) {
+                        Log.error(e);
+                    }
+                    System.out.print("? ");
+                }
+            }
+            return 0;
+        }
+        Collection<GroupArtifactVersion> dependencies = processGAVs(gavs);
+        return processor.execute(reporter, dependencies, repoRoot, count);
+    }
+
+    private Collection<GroupArtifactVersion> processGAVs(Collection<String> gavs) {
         Collection<GroupArtifactVersion> dependencies = new CopyOnWriteArrayList<>();
         gavs.forEach(
                 gav -> {
@@ -173,7 +207,7 @@ public class Main implements Callable<Integer> {
                 });
         assert !dependencies.isEmpty();
         Log.tracev("Processing GAVs: {0}", dependencies);
-        return processor.execute(reporter, dependencies, repoRoot, count);
+        return dependencies;
     }
 
     private void disableTlsValidation() throws NoSuchAlgorithmException, KeyManagementException {
