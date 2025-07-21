@@ -17,6 +17,7 @@ package com.github.andrewazores;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -152,7 +153,7 @@ public class Main implements Callable<Integer> {
             repoRoot = repoRoot.substring(0, repoRoot.length() - 1);
         }
         if (interactive) {
-            try (Scanner scanner = new Scanner(System.in)) {
+            try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
                 if (count == -1) {
                     count = 1;
                 }
