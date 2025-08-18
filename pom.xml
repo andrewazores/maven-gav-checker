@@ -31,7 +31,7 @@
 
   <org.junit.jupiter.version>5.13.4</org.junit.jupiter.version>
   <org.hamcrest.version>3.0</org.hamcrest.version>
-  <org.mockito.core.version>5.18.0</org.mockito.core.version>
+  <org.mockito.core.version>5.19.0</org.mockito.core.version>
 </properties>
 
 <dependencyManagement>
