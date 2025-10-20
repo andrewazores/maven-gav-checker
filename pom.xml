@@ -22,7 +22,7 @@
   <quarkus.platform.version>3.28.3</quarkus.platform.version>
 
   <com.github.spotbugs.version>4.8.6</com.github.spotbugs.version>
-  <com.github.spotbugs.plugin.version>4.9.6.0</com.github.spotbugs.plugin.version>
+  <com.github.spotbugs.plugin.version>4.9.8.1</com.github.spotbugs.plugin.version>
   <com.diffplug.spotless.maven.plugin.version>3.0.0</com.diffplug.spotless.maven.plugin.version>
   <com.google.java-format.version>1.23.0</com.google.java-format.version>
   <com.mycila.license.maven.plugin.version>5.0.0</com.mycila.license.maven.plugin.version>
