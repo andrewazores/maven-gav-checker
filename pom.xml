@@ -19,7 +19,7 @@
 
   <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
   <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-  <quarkus.platform.version>3.30.3</quarkus.platform.version>
+  <quarkus.platform.version>3.30.5</quarkus.platform.version>
 
   <com.github.spotbugs.version>4.8.6</com.github.spotbugs.version>
   <com.github.spotbugs.plugin.version>4.9.8.2</com.github.spotbugs.plugin.version>
